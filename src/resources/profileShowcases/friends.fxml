@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="335.0" prefWidth="228.0" style="-fx-background-color: rgba(30,30,30, 0.8);" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="profile.controllers.FriendsController">
+   <children>
+      <VBox prefHeight="337.0" prefWidth="158.0" AnchorPane.bottomAnchor="-2.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox prefHeight="30.0" prefWidth="100.0" style="-fx-background-color: #356fcc;">
+               <children>
+                  <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Friends" translateX="5.0" translateY="5.0" wrappingWidth="50.5224609375">
+                     <font>
+                        <Font name="Cambria Math" size="14.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                  </Text>
+                  <Text fx:id="numFriends_" fill="#d7d6d6" strokeType="OUTSIDE" strokeWidth="0.0" translateX="5.0" translateY="3.0">
+                     <font>
+                        <Font name="Cambria Math" size="18.0" />
+                     </font>
+                  </Text>
+               </children>
+            </HBox>
+            <Region prefHeight="17.0" prefWidth="100.0" />
+            <VBox fx:id="friendContainer_" prefHeight="312.0" prefWidth="158.0" />
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

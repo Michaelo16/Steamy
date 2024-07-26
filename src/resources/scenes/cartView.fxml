@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<StackPane prefHeight="391.0" prefWidth="1212.0" style="-fx-background-color: #1b2838;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="store.CartViewController">
+   <children>
+      <AnchorPane prefHeight="200.0" prefWidth="200.0" StackPane.alignment="CENTER">
+         <children>
+            <VBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <HBox prefHeight="40.0" prefWidth="405.0">
+                     <children>
+                        <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="CART" wrappingWidth="169.634765625">
+                           <font>
+                              <Font size="36.0" />
+                           </font>
+                        </Text>
+                     </children>
+                  </HBox>
+                  <Region prefHeight="35.0" prefWidth="405.0" />
+                  <HBox fx:id="mainContainer_" prefHeight="308.0" prefWidth="498.0">
+                     <children>
+                        <ScrollPane hbarPolicy="NEVER" prefHeight="308.0" prefWidth="966.0" stylesheets="@../style.css">
+                           <content>
+                              <VBox fx:id="cartListContainer_" alignment="CENTER" prefHeight="304.0" prefWidth="1192.0" style="-fx-background-color: #1b2838;" />
+                           </content>
+                        </ScrollPane>
+                        <VBox prefHeight="308.0" prefWidth="185.0">
+                           <children>
+                              <HBox prefHeight="42.0" prefWidth="185.0">
+                                 <children>
+                                    <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Total:" wrappingWidth="63.13671875">
+                                       <font>
+                                          <Font size="24.0" />
+                                       </font>
+                                    </Text>
+                                    <Text fx:id="priceText_" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" translateX="10.0" wrappingWidth="95.0">
+                                       <font>
+                                          <Font size="24.0" />
+                                       </font>
+                                    </Text>
+                                 </children>
+                              </HBox>
+                              <Button fx:id="checkoutButton_" alignment="CENTER" mnemonicParsing="false" onAction="#checkout" prefHeight="54.0" prefWidth="159.0" stylesheets="@../style.css" text="Checkout" translateX="10.0">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+   </children>
+</StackPane>

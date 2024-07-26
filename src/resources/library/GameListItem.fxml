@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane fx:id="mainPane_" onMouseDragged="#accentuate" onMouseEntered="#darken" prefHeight="35.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="library.ListItemController">
+   <children>
+      <HBox fx:id="listItemBox_" onMouseEntered="#accentuate" prefHeight="35.0" prefWidth="300.0" style="-fx-background-color: #1a1c21;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <Region prefHeight="35.0" prefWidth="23.0" />
+            <ImageView fx:id="gameIcon_" fitHeight="35.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true" />
+            <Text fx:id="title_" fill="#8a8a8a" strokeType="OUTSIDE" strokeWidth="0.0" text="Game Title" translateX="5.0" translateY="7.0" wrappingWidth="225.1240234375">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Text>
+         </children>
+      </HBox>
+   </children>
+</AnchorPane>

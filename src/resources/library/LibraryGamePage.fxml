@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="644.0" prefWidth="853.0" stylesheets="@../style.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="library.GamePageController">
+   <children>
+      <VBox alignment="CENTER" layoutX="-1.0" layoutY="-1.0" prefHeight="646.0" prefWidth="884.0" style="-fx-background-color: #1b2838;;" stylesheets="@../style.css" AnchorPane.bottomAnchor="-2.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <ScrollPane hbarPolicy="NEVER" prefHeight="1269.0" prefWidth="608.0" style="-fx-background-color: #1b2838;" VBox.vgrow="ALWAYS">
+              <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="999.0" prefWidth="884.0" style="-fx-background-color: #1b2838;">
+                     <children>
+                        <VBox prefHeight="1199.0" prefWidth="837.0">
+                           <children>
+                              <ImageView fx:id="banner_" fitHeight="269.0" fitWidth="862.0" pickOnBounds="true" preserveRatio="true" VBox.vgrow="ALWAYS" />
+                              <HBox prefHeight="82.0" prefWidth="608.0" style="-fx-background-color: #6e7278;">
+                                 <children>
+                                    <Region prefHeight="72.0" prefWidth="37.0" />
+                                    <Button mnemonicParsing="false" text="Install" textFill="WHITE" translateY="15.0">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                    </Button>
+                                    <Region prefHeight="72.0" prefWidth="15.0" />
+                                    <VBox alignment="CENTER" prefHeight="72.0" prefWidth="52.0">
+                                       <children>
+                                          <Text fill="#ababab" strokeType="OUTSIDE" strokeWidth="0.0" text="Space Required" wrappingWidth="105.69227600097656">
+                                             <font>
+                                                <Font size="14.0" />
+                                             </font>
+                                          </Text>
+                                          <Text fill="#ababab" strokeType="OUTSIDE" strokeWidth="0.0" text="Size">
+                                             <font>
+                                                <Font size="14.0" />
+                                             </font>
+                                          </Text>
+                                       </children>
+                                    </VBox>
+                                    <Region prefHeight="72.0" prefWidth="15.0" HBox.hgrow="NEVER" />
+                                    <VBox alignment="CENTER" prefHeight="72.0" prefWidth="47.0">
+                                       <children>
+                                          <Text fill="#ababab" strokeType="OUTSIDE" strokeWidth="0.0" text="Last played" wrappingWidth="104.4794921875">
+                                             <font>
+                                                <Font size="14.0" />
+                                             </font>
+                                          </Text>
+                                          <Text fill="#ababab" strokeType="OUTSIDE" strokeWidth="0.0" text="Date" wrappingWidth="105.69227600097656">
+                                             <font>
+                                                <Font size="14.0" />
+                                             </font>
+                                          </Text>
+                                       </children>
+                                    </VBox>
+                                    <Region prefHeight="72.0" prefWidth="15.0" />
+                                    <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0">
+                                       <children>
+                                          <Text fill="#ababab" strokeType="OUTSIDE" strokeWidth="0.0" text="Play Time" wrappingWidth="101.73599243164062">
+                                             <font>
+                                                <Font size="14.0" />
+                                             </font>
+                                          </Text>
+                                          <Text fill="#ababab" strokeType="OUTSIDE" strokeWidth="0.0" text="Hours" wrappingWidth="105.69227600097656">
+                                             <font>
+                                                <Font size="14.0" />
+                                             </font>
+                                          </Text>
+                                       </children>
+                                    </VBox>
+                                    <Button fx:id="deleteButton_" mnemonicParsing="false" onAction="#deleteGame" text="Delete" translateY="15.0" />
+                                    <Text fx:id="title_" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" translateX="5.0" translateY="15.0" wrappingWidth="233.0">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                    </Text>
+                                 </children>
+                              </HBox>
+                              <Region prefHeight="18.0" prefWidth="608.0" />
+                              <HBox prefHeight="767.0" prefWidth="608.0">
+                                 <children>
+                                    <Region prefHeight="155.0" prefWidth="20.0" />
+                                    <VBox fx:id="updateBox_" prefHeight="155.0" prefWidth="293.0" />
+                                    <Region prefHeight="155.0" prefWidth="25.0" />
+                                    <VBox fx:id="friendBox_" prefHeight="155.0" prefWidth="264.0" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </AnchorPane>
+              </content>
+            </ScrollPane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="340.0" style="-fx-background-color: rgba(30,30,30, 0.8);" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="profile.controllers.AchievementController">
+   <children>
+      <VBox alignment="CENTER" prefHeight="238.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox prefHeight="32.0" prefWidth="483.0" style="-fx-background-color: #356fcc;" VBox.vgrow="NEVER">
+               <children>
+                  <Region prefHeight="15.0" prefWidth="12.0" />
+                  <VBox prefHeight="15.0" prefWidth="235.0">
+                     <children>
+                        <Region prefHeight="8.0" prefWidth="112.0" />
+                        <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Rarest Achievement Showcase" textOrigin="TOP">
+                           <font>
+                              <Font name="Cambria Math" size="18.0" />
+                           </font>
+                        </Text>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <VBox prefHeight="202.0" prefWidth="400.0" VBox.vgrow="ALWAYS">
+               <children>
+                  <Region prefHeight="11.0" prefWidth="483.0" VBox.vgrow="NEVER" />
+                  <HBox prefHeight="203.0" prefWidth="483.0" VBox.vgrow="NEVER">
+                     <children>
+                        <Region prefHeight="147.0" prefWidth="15.0" />
+                        <VBox prefHeight="147.0" prefWidth="380.0" style="-fx-background-color: rgba(20,20,20, 0.5);" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Region prefHeight="8.0" prefWidth="377.0" />
+                              <HBox prefHeight="187.0" prefWidth="377.0">
+                                 <children>
+                                    <Region prefHeight="187.0" prefWidth="6.0" HBox.hgrow="NEVER" />
+                                    <GridPane fx:id="display_" alignment="CENTER" hgap="2.0" vgap="10.0" HBox.hgrow="ALWAYS">
+                                      <columnConstraints>
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                      </columnConstraints>
+                                      <rowConstraints>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                      </rowConstraints>
+                                       <children>
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="3" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="4" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="5" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="6" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="4" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="3" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="5" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="6" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="3" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="4" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                                          <ImageView fitHeight="46.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="5" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                                          <Text fx:id="otherAchivements_" fill="#b9b9b9" strokeType="OUTSIDE" strokeWidth="0.0" GridPane.columnIndex="6" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER">
+                                             <font>
+                                                <Font size="14.0" />
+                                             </font>
+                                          </Text>
+                                       </children>
+                                    </GridPane>
+                                    <Region prefHeight="187.0" prefWidth="6.0" HBox.hgrow="NEVER" />
+                                 </children>
+                              </HBox>
+                              <Region prefHeight="8.0" prefWidth="377.0" />
+                           </children>
+                        </VBox>
+                        <Region prefHeight="147.0" prefWidth="15.0" />
+                     </children>
+                  </HBox>
+                  <Region prefHeight="9.0" prefWidth="483.0" VBox.vgrow="NEVER" />
+                  <HBox prefHeight="58.0" prefWidth="400.0" VBox.vgrow="ALWAYS">
+                     <children>
+                        <Region prefHeight="40.0" prefWidth="15.0" />
+                        <HBox prefHeight="40.0" prefWidth="370.0" style="-fx-background-color: rgb(30, 53, 89,.5);;" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Region prefHeight="49.0" prefWidth="10.0" />
+                              <VBox prefHeight="48.0" prefWidth="79.0">
+                                 <children>
+                                    <Region prefHeight="0.0" prefWidth="131.0" />
+                                    <Text fx:id="numAchivements_" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0">
+                                       <font>
+                                          <Font size="24.0" />
+                                       </font></Text>
+                                    <Text fill="#b9b9b9" strokeType="OUTSIDE" strokeWidth="0.0" text="Achievements" />
+                                    <Region prefHeight="0.0" prefWidth="79.0" />
+                                 </children>
+                              </VBox>
+                              <Region prefHeight="56.0" prefWidth="22.0" />
+                              <VBox prefHeight="48.0" prefWidth="79.0">
+                                 <children>
+                                    <Region prefHeight="0.0" prefWidth="131.0" />
+                                    <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="60.515625">
+                                       <font>
+                                          <Font size="24.0" />
+                                       </font>
+                                    </Text>
+                                    <Text fill="#b9b9b9" strokeType="OUTSIDE" strokeWidth="0.0" text="Avg. Game Completion Rate" wrappingWidth="158.875" />
+                                    <Region prefHeight="15.0" prefWidth="131.0" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <Region prefHeight="40.0" prefWidth="15.0" />
+                     </children>
+                  </HBox>
+                  <Region prefHeight="14.0" prefWidth="400.0" VBox.vgrow="NEVER" />
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

@@ -1,0 +1,282 @@
+/* Define basic colors */
+.root {
+    -fx-background-color: #1b2838; /* Main background color */
+}
+
+/* Buttons */
+.button {
+    -fx-background-color: #2a475e; /* Button background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+    -fx-border-radius: 5; /* Border radius */
+    -fx-background-radius: 5; /* Background radius */
+    
+}
+
+.button:hover {
+    -fx-background-color: #66c0f4; /* Hover background color */
+    -fx-text-fill: #1b2838; /* Hover text color */
+}
+
+.tab-pane .tab-label {
+    -fx-text-fill: white; /* Text color of the tabs */
+}
+
+.tab-pane .tab-header-background {
+    -fx-background-color: #284d85; /* Background color of the tab header */
+}
+
+/* ToggleButton */
+.toggle-button {
+    -fx-background-color: #1b2838;
+    -fx-text-fill: white;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    
+}
+
+
+/* TextFields */
+.text-field {
+    -fx-background-color:#2a475e; /* TextField background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+    -fx-border-color: #66c0f4; /* Border color */
+    -fx-border-radius: 5; /* Border radius */
+    -fx-background-radius: 5; /* Background radius */
+    -fx-padding: 8; /* Padding */
+}
+
+.text-field:focused {
+    -fx-border-color: #66c0f4; /* Focus border color */
+    -fx-faint-focus-color: #66c0f422; /* Faint focus color */
+}
+
+/* Labels */
+.label {
+    -fx-text-fill: #c7d5e0; /* Label text color */
+}
+
+/* ComboBoxes */
+.combo-box {
+    -fx-background-color: #2a475e; /* ComboBox background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+    -fx-border-color: #c7d5e0; /* Border color */
+    -fx-border-radius: 5; /* Border radius */
+    -fx-background-radius: 5; /* Background radius */
+}
+
+.combo-box .list-cell {
+    -fx-background-color: #2a475e; /* ListCell background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+/* Tooltips */
+.tooltip {
+    -fx-background-color: #2a475e; /* Tooltip background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+    -fx-border-color: #c7d5e0; /* Border color */
+    -fx-padding: 8; /* Padding */
+    -fx-border-radius: 5; /* Border radius */
+    -fx-background-radius: 5; /* Background radius */
+}
+
+/* MenuBar and MenuItems */
+.menu-bar {
+    -fx-background-color: #2a475e; /* MenuBar background */
+}
+
+.menu-item {
+    -fx-background-color: #2a475e; /* MenuItem background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.menu-item:hover {
+    -fx-background-color: #66c0f4; /* Hover background color */
+    -fx-text-fill: #1b2838; /* Hover text color */
+}
+
+/* TabPane and Tabs */
+.tab-pane {
+    -fx-background-color: #1b2838; /* TabPane background */
+}
+
+.tab {
+    -fx-background-color: #2a475e; /* Tab background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.tab:selected {
+    -fx-background-color: #66c0f4; /* Selected tab background */
+    -fx-text-fill: #1b2838; /* Selected tab text color */
+}
+
+/* TableView */
+.table-view {
+    -fx-background-color: #1b2838; /* TableView background */
+    -fx-table-cell-border-color: #1b2838; /* Table cell border color */
+    -fx-table-header-border-color: #2a475e; /* Table header border color */
+    -fx-padding: 5; /* Padding */
+}
+
+.table-view .column-header {
+    -fx-background-color: #2a475e; /* Column header background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.table-view .cell {
+    -fx-background-color: #1b2838; /* Cell background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+/* ScrollBar */
+.scroll-bar {
+    -fx-background-color: #2a475e; /* ScrollBar background */
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #66c0f4; /* ScrollBar thumb color */
+}
+
+/* CheckBoxes */
+.check-box {
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.check-box .box {
+    -fx-border-color: #66c0f4; /* Box border color */
+    -fx-background-color: #2a475e; /* Box background color */
+    -fx-background-radius: 3; /* Box background radius */
+    -fx-border-radius: 3; /* Box border radius */
+    -fx-padding: 5; /* Box padding */
+}
+
+.check-box:selected .box {
+    -fx-background-color: #66c0f4; /* Selected box background color */
+    -fx-border-color: #66c0f4; /* Selected box border color */
+}
+
+/* RadioButtons */
+.radio-button {
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.radio-button .radio {
+    -fx-mark-color: #66c0f4; /* Radio mark color */
+    -fx-background-color: #2a475e; /* Radio background color */
+    -fx-border-color: #66c0f4; /* Radio border color */
+    -fx-background-radius: 3; /* Radio background radius */
+    -fx-border-radius: 3; /* Radio border radius */
+    -fx-padding: 5; /* Radio padding */
+}
+
+.radio-button:selected .radio {
+    -fx-background-color: #66c0f4; /* Selected radio background color */
+    -fx-border-color: #66c0f4; /* Selected radio border color */
+}
+
+/* Sliders */
+.slider .track {
+    -fx-background-color: #2a475e; /* Slider track background */
+}
+
+.slider .thumb {
+    -fx-background-color: #66c0f4; /* Slider thumb color */
+}
+
+/* ProgressBar */
+.progress-bar {
+    -fx-accent: #66c0f4; /* Progress bar color */
+    -fx-background-color: #2a475e; /* Progress bar background color */
+}
+
+/* ListView */
+.list-view {
+    -fx-background-color: #1b2838; /* ListView background */
+    -fx-cell-hover-color: #66c0f4; /* Hover color */
+}
+
+.list-view .list-cell {
+    -fx-background-color: #1b2838; /* ListCell background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.list-view .list-cell:hover {
+    -fx-background-color: #66c0f4; /* Hover background color */
+    -fx-text-fill: #1b2838; /* Hover text color */
+}
+
+/* TreeView */
+.tree-view {
+    -fx-background-color: #1b2838; /* TreeView background */
+}
+
+.tree-view .tree-cell {
+    -fx-background-color: #1b2838; /* TreeCell background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.tree-view .tree-cell:hover {
+    -fx-background-color: #66c0f4; /* Hover background color */
+    -fx-text-fill: #1b2838; /* Hover text color */
+}
+
+/* Accordion */
+.accordion {
+    -fx-background-color: #1b2838; /* Accordion background */
+}
+
+.titled-pane {
+    -fx-background-color: #2a475e; /* TitledPane background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.titled-pane > .title {
+    -fx-background-color: #2a475e; /* Title background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.titled-pane:expanded > .title {
+    -fx-background-color: #66c0f4; /* Expanded title background */
+    -fx-text-fill: #1b2838; /* Expanded title text color */
+}
+
+/* SplitPane */
+.split-pane {
+    -fx-background-color: #1b2838; /* SplitPane background */
+}
+
+.split-pane-divider {
+    -fx-background-color: #2a475e; /* Divider background */
+}
+
+/* Dialogs */
+.dialog-pane {
+    -fx-background-color: #2a475e; /* Dialog background */
+    -fx-border-color: #1b2838; /* Dialog border color */
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #1b2838; /* Header background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.dialog-pane .content {
+    -fx-background-color: #1b2838; /* Content background */
+    -fx-text-fill: #c7d5e0; /* Text color */
+}
+
+.dialog-pane .button-bar {
+    -fx-background-color: #2a475e; /* Button bar background */
+}
+
+/* ScrollPane */
+.scroll-pane {
+    -fx-background-color: #1b2838; /* ScrollPane background */
+    -fx-border-color: #2a475e; /* Border color */
+    -fx-border-radius: 5; /* Border radius */
+    -fx-background-radius: 5; /* Background radius */
+}
+
+/* AnchorPane */
+.anchor-pane {
+    -fx-background-color: #1b2838; /* AnchorPane background */
+}

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<VBox fx:id="previewRoot_" prefHeight="825.0" prefWidth="348.0" style="-fx-background-color: #1b2838;;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="store.SidePreviewController">
+   <children>
+      <HBox prefHeight="825.0" prefWidth="348.0">
+         <children>
+            <Region prefHeight="1047.0" prefWidth="12.0" style="-fx-background-color: #6ba4fa;" />
+            <VBox prefHeight="1047.0" prefWidth="320.0">
+               <children>
+                  <Region prefHeight="14.0" prefWidth="326.0" style="-fx-background-color: #6ba4fa;" />
+                  <VBox prefHeight="94.0" prefWidth="320.0" style="-fx-background-color: #2260bd;">
+                     <children>
+                        <Text fx:id="previewTitle_" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" translateX="5.0" translateY="10.0" wrappingWidth="316.13671875">
+                           <font>
+                              <Font size="24.0" />
+                           </font>
+                        </Text>
+                        <Region prefHeight="21.0" prefWidth="320.0" />
+                        <HBox fx:id="previewTagBox_" prefHeight="23.0" prefWidth="320.0">
+                           <children>
+                              <Button fx:id="genre_" alignment="BOTTOM_LEFT" contentDisplay="CENTER" layoutX="10.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="59.0" HBox.hgrow="ALWAYS">
+                                 <HBox.margin>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </HBox.margin>
+                              </Button>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <GridPane fx:id="previewGrid_" alignment="CENTER" prefHeight="4.0" prefWidth="320.0" style="-fx-background-color: #2260bd;" VBox.vgrow="ALWAYS">
+                    <columnConstraints>
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <ImageView fx:id="prevImage1_" fitHeight="160.0" fitWidth="290.0" onMouseClicked="#test" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                        <ImageView fx:id="prevImage3_" fitHeight="160.0" fitWidth="290.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                        <ImageView fx:id="prevImage2_" fitHeight="160.0" fitWidth="290.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                        <ImageView fx:id="prevImage4_" fitHeight="160.0" fitWidth="290.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.valignment="CENTER" />
+                     </children>
+                  </GridPane>
+                  <Region prefHeight="14.0" prefWidth="320.0" style="-fx-background-color: #6ba4fa;" />
+               </children>
+            </VBox>
+            <Region prefHeight="1047.0" prefWidth="16.0" style="-fx-background-color: #6ba4fa;" />
+         </children>
+      </HBox>
+   </children>
+</VBox>
