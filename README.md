@@ -34,3 +34,5 @@ https://jdbc.postgresql.org/download/
 
 ## Running the Project
 Run SteamyApp.java 
+The test user that I have been user is Username: alicewonder password: wonderland123
+if you want to search for games most of the test games start with the word 'game' so that will give the best results
