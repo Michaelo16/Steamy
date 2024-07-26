@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<StackPane prefHeight="1772.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="store.StoreViewController">
+   <children>
+      <ScrollPane fx:id="scrollPane_" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: #1b2838;" stylesheets="@../style.css">
+         <content>
+            <AnchorPane fx:id="anchorPane_" minHeight="2000.0" prefHeight="2000.0" style="-fx-background-color: #1b2838;;" stylesheets="@../style.css">
+               <children>
+                  <VBox prefHeight="1772.0" prefWidth="883.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                     <children>
+                        <HBox prefHeight="100.0" prefWidth="884.0">
+                           <children>
+                              <VBox alignment="TOP_CENTER" prefHeight="113.0" prefWidth="811.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Region prefHeight="48.0" prefWidth="811.0" />
+                                    <HBox alignment="CENTER_RIGHT" VBox.vgrow="ALWAYS">
+                                       <children>
+                                          <Region prefHeight="25.0" prefWidth="719.0" HBox.hgrow="ALWAYS" />
+                                          <Button alignment="BOTTOM_CENTER" mnemonicParsing="false" prefHeight="25.0" prefWidth="62.0" style="-fx-background-color: #526580;" text="Wishlist" HBox.hgrow="ALWAYS">
+                                             <HBox.margin>
+                                                <Insets right="80.0" />
+                                             </HBox.margin>
+                                          </Button>
+                                          <Region prefHeight="25.0" prefWidth="0.0" HBox.hgrow="ALWAYS" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="TOP_CENTER" prefHeight="62.0" prefWidth="800.0" style="-fx-background-color: #3d74cc;" VBox.vgrow="ALWAYS">
+                                       <children>
+                                          <HBox alignment="CENTER" prefHeight="62.0" prefWidth="510.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Region prefHeight="45.0" prefWidth="82.0" />
+                                                <MenuBar>
+                                                   <menus>
+                                                      <Menu mnemonicParsing="false" text="Your Store">
+                                                         <items>
+                                                            <MenuItem mnemonicParsing="false" text="About" />
+                                                            <SeparatorMenuItem mnemonicParsing="false" />
+                                                            <MenuItem mnemonicParsing="false" text="Unspecified Action" />
+                                                         </items>
+                                                      </Menu>
+                                                   </menus>
+                                                   <opaqueInsets>
+                                                      <Insets />
+                                                   </opaqueInsets>
+                                                </MenuBar>
+                                                <MenuBar>
+                                                   <menus>
+                                                      <Menu mnemonicParsing="false" text="New &amp; Popular">
+                                                         <items>
+                                                            <MenuItem mnemonicParsing="false" text="About" />
+                                                         </items>
+                                                      </Menu>
+                                                   </menus>
+                                                   <HBox.margin>
+                                                      <Insets left="5.0" />
+                                                   </HBox.margin>
+                                                </MenuBar>
+                                                <MenuBar>
+                                                   <menus>
+                                                      <Menu mnemonicParsing="false" text="Categories">
+                                                         <items>
+                                                            <MenuItem mnemonicParsing="false" text="About" />
+                                                         </items>
+                                                      </Menu>
+                                                   </menus>
+                                                   <HBox.margin>
+                                                      <Insets left="5.0" />
+                                                   </HBox.margin>
+                                                </MenuBar>
+                                                <MenuBar prefHeight="25.0" prefWidth="130.0">
+                                                   <menus>
+                                                      <Menu mnemonicParsing="false" text="Genres">
+                                                         <items>
+                                                            <MenuItem fx:id="Action" mnemonicParsing="false" onAction="#searchByGenre" text="Action" />
+                                                            <MenuItem fx:id="RPG" mnemonicParsing="false" onAction="#searchByGenre" text="RPG" />
+                                                            <MenuItem fx:id="Adventure" mnemonicParsing="false" onAction="#searchByGenre" text="Adventure" />
+                                                         </items>
+                                                      </Menu>
+                                                   </menus>
+                                                   <HBox.margin>
+                                                      <Insets left="5.0" />
+                                                   </HBox.margin>
+                                                </MenuBar>
+                                             </children>
+                                          </HBox>
+                                          <Region prefHeight="45.0" prefWidth="158.0" HBox.hgrow="ALWAYS" />
+                                          <VBox alignment="CENTER_RIGHT" prefHeight="62.0" prefWidth="204.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Region prefHeight="0.0" prefWidth="210.0" VBox.vgrow="ALWAYS" />
+                                                <HBox alignment="CENTER" prefHeight="62.0" prefWidth="129.0">
+                                                   <children>
+                                                      <TextField fx:id="searchBar_" prefHeight="35.0" prefWidth="150.0" promptText="Search" />
+                                                      <Button fx:id="searchButton_" mnemonicParsing="false" onMouseClicked="#showSearchList" prefHeight="20.0" prefWidth="62.0" text="Search">
+                                                         <font>
+                                                            <Font size="10.0" />
+                                                         </font>
+                                                         <HBox.margin>
+                                                            <Insets left="5.0" />
+                                                         </HBox.margin>
+                                                      </Button>
+                                                   </children>
+                                                </HBox>
+                                                <Region prefHeight="0.0" prefWidth="210.0" VBox.vgrow="ALWAYS" />
+                                             </children>
+                                          </VBox>
+                                          <Region prefHeight="45.0" prefWidth="13.0" HBox.hgrow="ALWAYS" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <Region prefHeight="96.0" prefWidth="883.0" />
+                        <HBox fx:id="mainCarouselBox_" alignment="CENTER" prefHeight="205.0" prefWidth="883.0" VBox.vgrow="ALWAYS" />
+                        <Region prefHeight="100.0" prefWidth="883.0" />
+                        <HBox fx:id="listViewBox_" alignment="CENTER" prefHeight="1200.0" prefWidth="900.0" />
+                     </children>
+                  </VBox>
+               </children>
+            </AnchorPane>
+         </content>
+      </ScrollPane>
+   </children>
+</StackPane>

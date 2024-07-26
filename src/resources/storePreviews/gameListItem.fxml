@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<VBox fx:id="storeItem_" onMouseEntered="#updatePreview" prefHeight="93.0" prefWidth="469.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="store.StoreItemController">
+   <children>
+      <Region fx:id="separator_" prefHeight="13.0" prefWidth="382.0" />
+      <HBox fx:id="storeItemBox_" onMouseClicked="#goToStorePage" prefHeight="79.0" prefWidth="463.0" style="-fx-background-color: #284d85;">
+         <children>
+            <ImageView fx:id="gameImage_" fitHeight="87.0" fitWidth="169.0" pickOnBounds="true" preserveRatio="true" HBox.hgrow="ALWAYS">
+               <image>
+                  <Image url="@../images/Store%20Pages/TeamFortress2/header.png" />
+               </image>
+            </ImageView>
+            <VBox fx:id="leftTextBox_" prefHeight="79.0" prefWidth="213.0">
+               <children>
+                  <Text fx:id="titleText_" fill="#eeeeee" strokeType="OUTSIDE" strokeWidth="0.0" text="Team Fortress 2" translateX="5.0" translateY="5.0" wrappingWidth="140.13671875">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Text>
+                  <Text fx:id="genreText_" fill="#808080" strokeType="OUTSIDE" strokeWidth="0.0" translateX="5.0" translateY="20.0" wrappingWidth="229.13671875" />
+               </children>
+            </VBox>
+            <Text fx:id="priceText_" fill="#eeeeee" strokeType="OUTSIDE" strokeWidth="0.0" text="Free To Play" wrappingWidth="54.0205078125">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Text>
+         </children>
+      </HBox>
+   </children>
+</VBox>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<StackPane prefHeight="1714.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="profile.controllers.ProfileViewController">
+   <children>
+      <ScrollPane fx:id="scrollPane_" style="-fx-background-color: #1b2838;" stylesheets="@../style.css">
+        <content>
+          <AnchorPane fx:id="anchorPane_" minHeight="2000.0" prefHeight="2000.0" style="-fx-background-color: #1b2838;" stylesheets="@../style.css">
+               <children>
+                  <HBox alignment="TOP_CENTER" prefHeight="1916.0" prefWidth="882.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                     <children>
+                        <Region prefHeight="600.0" prefWidth="125.0" />
+                        <VBox>
+                           <children>
+                              <Region prefHeight="14.0" prefWidth="720.0" />
+                              <HBox prefHeight="461.0" prefWidth="720.0">
+                                 <children>
+                                    <VBox prefHeight="754.0" prefWidth="739.0">
+                                       <children>
+                                          <Region prefHeight="29.0" prefWidth="531.0" />
+                                          <HBox prefHeight="100.0" prefWidth="200.0">
+                                             <children>
+                                                <Region prefHeight="200.0" prefWidth="33.0" />
+                                                <ImageView fx:id="profilePic_" fitHeight="142.0" fitWidth="177.0" pickOnBounds="true" preserveRatio="true" VBox.vgrow="NEVER" />
+                                                <VBox prefHeight="200.0" prefWidth="382.0">
+                                                   <children>
+                                                      <Text fx:id="username_" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" translateX="25.0" translateY="25.0" wrappingWidth="160.13671875">
+                                                         <font>
+                                                            <Font name="Cambria Math" size="24.0" />
+                                                         </font>
+                                                      </Text>
+                                                      <Region prefHeight="46.0" prefWidth="321.0" />
+                                                      <HBox prefHeight="21.0" prefWidth="254.0">
+                                                         <children>
+                                                            <Region prefHeight="25.0" prefWidth="25.0" />
+                                                            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Status: " wrappingWidth="80.13671875">
+                                                               <font>
+                                                                  <Font name="Cambria Math" size="24.0" />
+                                                               </font>
+                                                            </Text>
+                                                            <Text fill="#11ff00" strokeType="OUTSIDE" strokeWidth="0.0" text="Online" wrappingWidth="69.43359375">
+                                                               <font>
+                                                                  <Font name="Cambria Math" size="24.0" />
+                                                               </font>
+                                                            </Text>
+                                                         </children>
+                                                      </HBox>
+                                                      <Region prefHeight="20.0" prefWidth="369.0" />
+                                                      <HBox prefHeight="34.0" prefWidth="369.0">
+                                                         <children>
+                                                            <Region prefHeight="32.0" prefWidth="28.0" />
+                                                            <Text fx:id="memberSince_" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="321.88671875">
+                                                               <font>
+                                                                  <Font name="Cambria Math" size="24.0" />
+                                                               </font>
+                                                            </Text>
+                                                         </children>
+                                                      </HBox>
+                                                   </children>
+                                                </VBox>
+                                             </children>
+                                          </HBox>
+                                          <Region prefHeight="22.0" prefWidth="531.0" />
+                                          <HBox prefHeight="273.0" prefWidth="531.0">
+                                             <children>
+                                                <Region prefHeight="248.0" prefWidth="42.0" />
+                                                <TextArea fx:id="bioArea_" prefHeight="234.0" prefWidth="531.0" style="-fx-text-fill:: #e0e0e0;" text="Bio: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." wrapText="true">
+                                                   <font>
+                                                      <Font size="15.0" />
+                                                   </font>
+                                                </TextArea>
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                    <Region prefHeight="754.0" prefWidth="166.0" />
+                                    <VBox prefHeight="754.0" prefWidth="398.0">
+                                       <children>
+                                          <Region prefHeight="38.0" prefWidth="265.0" />
+                                          <Region prefHeight="46.0" prefWidth="173.0" />
+                                          <HBox fx:id="friendBox_" prefHeight="508.0" prefWidth="190.0">
+                                             <children>
+                                                <Region prefHeight="100.0" prefWidth="20.0" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <Region prefHeight="58.0" prefWidth="720.0" />
+                              <VBox fx:id="showcasesContainer_" prefHeight="1198.0" prefWidth="764.0" />
+                           </children>
+                        </VBox>
+                        <Region prefHeight="600.0" prefWidth="125.0" />
+                     </children>
+                  </HBox>
+               </children>
+            </AnchorPane>
+        </content>
+      </ScrollPane>
+   </children>
+</StackPane>
