@@ -29,7 +29,7 @@ https://jdbc.postgresql.org/download/
 2. Import the src folder into a new project
 3. download the required libraries and add them to the project buildpath
 4. Navigate to the common package
-5. add these vm arguments to the runtime config replacing the file path with your own
+5. add these vm arguments to the runtime config for the main SteamyApp.java, replacing the file path with your own
 --module-path "path/to/your/javafx" --add-modules javafx.controls,javafx.graphics,javafx.fxml
 
 ## Running the Project
