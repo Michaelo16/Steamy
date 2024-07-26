@@ -2,6 +2,7 @@
 Steamy Application
 
 ## Description
+--
 A small JavaFX application I made as a final project in my Database Theory and Practice class. It aims to re-create 
 the features and implementation of Valve's Steam. Current implemented features include:
 Creating accounts and logging in,
@@ -11,7 +12,7 @@ searching by title, genre, popularity, relevance among friends.
 The ability to 'purchase' games and add them to your library
 the ability to check your profile page and view your friends
 view other friend's profile page
---
+
 There were a lot of features that I never got around to finishing and as a result there are some remnants in the database and code of their existence. 
 I have included the PostgreSQL Dump file for the database
 
