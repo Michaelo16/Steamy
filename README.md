@@ -9,9 +9,9 @@ Creating accounts and logging in,
 password encryption,
 a functional store that includes different fake games
 searching by title, genre, popularity, relevance among friends. 
-The ability to 'purchase' games and add them to your library
-the ability to check your profile page and view your friends
-view other friend's profile page
+The ability to 'purchase' games and add them to your library,
+the ability to check your profile page and view your friends,
+and view other friend's profile pages
 
 There were a lot of features that I never got around to finishing and as a result there are some remnants in the database and code of their existence. 
 I have included the PostgreSQL Dump file for the database
