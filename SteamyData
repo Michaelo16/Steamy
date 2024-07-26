@@ -1,0 +1,2774 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 16.3
+-- Dumped by pg_dump version 16.3
+
+-- Started on 2024-07-26 11:17:12
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2 (class 3079 OID 17426)
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- TOC entry 5143 (class 0 OID 0)
+-- Dependencies: 2
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
+--
+-- TOC entry 322 (class 1255 OID 17539)
+-- Name: accept_friend_request(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.accept_friend_request(user_id1 integer, user_id2 integer) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Check if the friendship exists and is in 'waiting' status
+    IF NOT EXISTS (SELECT 1 FROM Friendships WHERE ((UserID1 = user_id1 AND UserID2 = user_id2) OR (UserID1 = user_id2 AND UserID2 = user_id1)) AND Status = 'waiting') THEN
+        RETURN 'Friend request not found or already accepted.';
+    END IF;
+
+    -- Update the friendship status to 'accepted'
+    UPDATE Friendships
+    SET Status = 'accepted'
+    WHERE (UserID1 = user_id1 AND UserID2 = user_id2) OR (UserID1 = user_id2 AND UserID2 = user_id1);
+
+    RETURN 'Friend request accepted successfully.';
+END;
+$$;
+
+
+ALTER FUNCTION public.accept_friend_request(user_id1 integer, user_id2 integer) OWNER TO postgres;
+
+--
+-- TOC entry 269 (class 1255 OID 17538)
+-- Name: add_friend(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.add_friend(user_id1 integer, user_id2 integer) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Check if the friendship already exists
+    IF EXISTS (SELECT 1 FROM Friendships WHERE (UserID1 = user_id1 AND UserID2 = user_id2) OR (UserID1 = user_id2 AND UserID2 = user_id1)) THEN
+        RETURN 'Friendship already exists.';
+    END IF;
+
+    -- Add the friendship with status 'waiting'
+    INSERT INTO Friendships (UserID1, UserID2, Status)
+    VALUES (user_id1, user_id2, 'waiting');
+
+    RETURN 'Friend request sent successfully.';
+END;
+$$;
+
+
+ALTER FUNCTION public.add_friend(user_id1 integer, user_id2 integer) OWNER TO postgres;
+
+--
+-- TOC entry 320 (class 1255 OID 17509)
+-- Name: add_game(character varying, text, date, character varying, character varying, numeric, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.add_game(p_title character varying, p_description text, p_release_date date, p_developer character varying, p_publisher character varying, p_price numeric, p_genre_name character varying) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_genre_id INT;
+BEGIN
+    -- Get GenreID from Genres table
+    SELECT GenreID INTO v_genre_id
+    FROM Genres
+    WHERE GenreName = p_genre_name;
+
+    -- If the genre doesn't exist, raise an exception
+    IF v_genre_id IS NULL THEN
+        RAISE EXCEPTION 'Genre % does not exist', p_genre_name;
+    END IF;
+
+    -- Insert the new game into the Games table
+    INSERT INTO Games (Title, Description, ReleaseDate, Developer, Publisher, Price, GenreID)
+    VALUES (p_title, p_description, p_release_date, p_developer, p_publisher, p_price, v_genre_id);
+END;
+$$;
+
+
+ALTER FUNCTION public.add_game(p_title character varying, p_description text, p_release_date date, p_developer character varying, p_publisher character varying, p_price numeric, p_genre_name character varying) OWNER TO postgres;
+
+--
+-- TOC entry 290 (class 1255 OID 17218)
+-- Name: add_new_game_with_genres(character varying, text, character varying[], date, character varying, character varying); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.add_new_game_with_genres(IN title character varying, IN description text, IN genre_names character varying[], IN release_date date, IN developer character varying, IN publisher character varying)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    new_game_id INT;
+    genre_id INT;
+    genre_name VARCHAR;
+BEGIN
+    -- Insert new game
+    INSERT INTO Games (Title, Description, ReleaseDate, Developer, Publisher)
+    VALUES (title, description, release_date, developer, publisher)
+    RETURNING GameID INTO new_game_id;
+
+    -- Insert genres and game-genre relationships
+    FOR i IN 1..array_length(genre_names, 1) LOOP
+        genre_name := genre_names[i];
+
+        -- Get or insert genre
+        SELECT GenreID INTO genre_id FROM Genres WHERE GenreName = genre_name;
+        IF NOT FOUND THEN
+            INSERT INTO Genres (GenreName) VALUES (genre_name) RETURNING GenreID INTO genre_id;
+        END IF;
+
+        -- Insert game-genre relationship
+        INSERT INTO GameGenres (GameID, GenreID) VALUES (new_game_id, genre_id);
+    END LOOP;
+END;
+$$;
+
+
+ALTER PROCEDURE public.add_new_game_with_genres(IN title character varying, IN description text, IN genre_names character varying[], IN release_date date, IN developer character varying, IN publisher character varying) OWNER TO postgres;
+
+--
+-- TOC entry 273 (class 1255 OID 17377)
+-- Name: add_or_update_achievement_showcase(integer, integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.add_or_update_achievement_showcase(IN user_id integer, IN achievement_id integer, IN total_achievements integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM AchievementShowcase WHERE UserID = user_id) THEN
+        UPDATE AchievementShowcase
+        SET AchievementID = achievement_id, TotalAchievements = total_achievements
+        WHERE UserID = user_id;
+    ELSE
+        INSERT INTO AchievementShowcase (UserID, AchievementID, TotalAchievements)
+        VALUES (user_id, achievement_id, total_achievements);
+    END IF;
+END;
+$$;
+
+
+ALTER PROCEDURE public.add_or_update_achievement_showcase(IN user_id integer, IN achievement_id integer, IN total_achievements integer) OWNER TO postgres;
+
+--
+-- TOC entry 270 (class 1255 OID 17376)
+-- Name: add_or_update_favorite_game_showcase(integer, integer, integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.add_or_update_favorite_game_showcase(IN user_id integer, IN game_id integer, IN hours_played integer, IN achievement_progress integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM FavoriteGameShowcase WHERE UserID = user_id) THEN
+        UPDATE FavoriteGameShowcase
+        SET GameID = game_id, HoursPlayed = hours_played, AchievementProgress = achievement_progress
+        WHERE UserID = user_id;
+    ELSE
+        INSERT INTO FavoriteGameShowcase (UserID, GameID, HoursPlayed, AchievementProgress)
+        VALUES (user_id, game_id, hours_played, achievement_progress);
+    END IF;
+END;
+$$;
+
+
+ALTER PROCEDURE public.add_or_update_favorite_game_showcase(IN user_id integer, IN game_id integer, IN hours_played integer, IN achievement_progress integer) OWNER TO postgres;
+
+--
+-- TOC entry 341 (class 1255 OID 17343)
+-- Name: add_or_update_profile(integer, text, character varying, character varying, character varying); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.add_or_update_profile(IN user_id integer, IN bio text, IN location character varying, IN website character varying, IN profile_picture character varying)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM Profiles WHERE UserID = user_id) THEN
+        UPDATE Profiles
+        SET Bio = add_or_update_profile.bio, 
+            Location = add_or_update_profile.location, 
+            Website = add_or_update_profile.website, 
+            ProfilePicture = add_or_update_profile.profile_picture
+        WHERE UserID = user_id;
+    ELSE
+        INSERT INTO Profiles (UserID, Bio, Location, Website, ProfilePicture)
+        VALUES (user_id, bio, location, website, profile_picture);
+    END IF;
+END;
+$$;
+
+
+ALTER PROCEDURE public.add_or_update_profile(IN user_id integer, IN bio text, IN location character varying, IN website character varying, IN profile_picture character varying) OWNER TO postgres;
+
+--
+-- TOC entry 330 (class 1255 OID 17344)
+-- Name: add_or_update_showcase(integer, character varying, jsonb); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.add_or_update_showcase(IN user_id integer, IN showcase_type character varying, IN showcase_data jsonb)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM ProfileShowcases WHERE UserID = user_id AND ShowcaseType = showcase_type) THEN
+        UPDATE ProfileShowcases
+        SET ShowcaseData = showcase_data
+        WHERE UserID = user_id AND ShowcaseType = showcase_type;
+    ELSE
+        INSERT INTO ProfileShowcases (UserID, ShowcaseType, ShowcaseData)
+        VALUES (user_id, showcase_type, showcase_data);
+    END IF;
+END;
+$$;
+
+
+ALTER PROCEDURE public.add_or_update_showcase(IN user_id integer, IN showcase_type character varying, IN showcase_data jsonb) OWNER TO postgres;
+
+--
+-- TOC entry 296 (class 1255 OID 17534)
+-- Name: add_to_cart(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.add_to_cart(user_id integer, game_id integer) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Check if the game is already in the user's library
+    IF EXISTS (SELECT 1 FROM Purchases WHERE UserID = user_id AND GameID = game_id) THEN
+        RETURN 'Game is already in the user''s library.';
+    END IF;
+
+    -- Check if the game is already in the user's cart
+    IF EXISTS (SELECT 1 FROM Cart WHERE UserID = user_id AND GameID = game_id) THEN
+        RETURN 'Game is already in the user''s cart.';
+    END IF;
+
+    -- Add the game to the user's cart
+    INSERT INTO Cart (UserID, GameID, DateAdded)
+    VALUES (user_id, game_id, NOW());
+
+    RETURN 'Game added to cart successfully.';
+END;
+$$;
+
+
+ALTER FUNCTION public.add_to_cart(user_id integer, game_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 318 (class 1255 OID 17481)
+-- Name: add_to_favorites(integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.add_to_favorites(IN p_userid integer, IN p_gameid integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO FavoriteGames (UserID, GameID)
+    VALUES (p_userid, p_gameid)
+    ON CONFLICT DO NOTHING;
+END;
+$$;
+
+
+ALTER PROCEDURE public.add_to_favorites(IN p_userid integer, IN p_gameid integer) OWNER TO postgres;
+
+--
+-- TOC entry 285 (class 1255 OID 17480)
+-- Name: add_to_library(integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.add_to_library(IN p_userid integer, IN p_gameid integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO Purchases (UserID, GameID, PurchaseDate, PaymentMethod)
+    VALUES (p_userid, p_gameid, CURRENT_DATE, 'Credit Card');
+END;
+$$;
+
+
+ALTER PROCEDURE public.add_to_library(IN p_userid integer, IN p_gameid integer) OWNER TO postgres;
+
+--
+-- TOC entry 298 (class 1255 OID 17296)
+-- Name: add_to_wishlist(integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.add_to_wishlist(IN user_id integer, IN game_id integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO Wishlist (UserID, GameID) VALUES (user_id, game_id);
+END;
+$$;
+
+
+ALTER PROCEDURE public.add_to_wishlist(IN user_id integer, IN game_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 261 (class 1255 OID 17463)
+-- Name: add_user(character varying, character varying, character varying); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.add_user(IN p_username character varying, IN p_email character varying, IN p_password character varying, OUT p_userid integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO Users (UserName, Email, PasswordHash)
+    VALUES (p_username, p_email, crypt(p_password, gen_salt('bf')))
+    RETURNING UserID INTO p_userid;
+END;
+$$;
+
+
+ALTER PROCEDURE public.add_user(IN p_username character varying, IN p_email character varying, IN p_password character varying, OUT p_userid integer) OWNER TO postgres;
+
+--
+-- TOC entry 284 (class 1255 OID 17543)
+-- Name: add_user_with_profile(character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.add_user_with_profile(username character varying, password character varying) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    new_user_id INT;
+BEGIN
+    -- Add the new user
+    INSERT INTO Users (Username, passwordhash)
+    VALUES (username, crypt(password, gen_salt('bf')))
+    RETURNING UserID INTO new_user_id;
+
+    -- Add the default profile data
+    INSERT INTO Profiles (UserID, location, Bio, ProfilePicture)
+    VALUES (new_user_id, 'default location', 'This is a default bio.', 'default_picture.png');
+
+    RETURN 'User and profile created successfully.';
+END;
+$$;
+
+
+ALTER FUNCTION public.add_user_with_profile(username character varying, password character varying) OWNER TO postgres;
+
+--
+-- TOC entry 292 (class 1255 OID 17277)
+-- Name: clear_cart(integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.clear_cart(IN user_id integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Delete all items from the user's cart
+    DELETE FROM Cart WHERE UserID = user_id;
+END;
+$$;
+
+
+ALTER PROCEDURE public.clear_cart(IN user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 326 (class 1255 OID 17536)
+-- Name: delete_from_library(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.delete_from_library(user_id integer, game_id integer) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Check if the game is in the user's library
+    IF NOT EXISTS (SELECT 1 FROM Purchases WHERE UserID = user_id AND GameID = game_id) THEN
+        RETURN 'Game is not in the user''s library.';
+    END IF;
+
+    -- Delete the game from the user's library
+    DELETE FROM Purchases WHERE UserID = user_id AND GameID = game_id;
+
+    RETURN 'Game removed from library successfully.';
+END;
+$$;
+
+
+ALTER FUNCTION public.delete_from_library(user_id integer, game_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 327 (class 1255 OID 17464)
+-- Name: delete_user(integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.delete_user(IN p_userid integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM Users WHERE UserID = p_userid;
+END;
+$$;
+
+
+ALTER PROCEDURE public.delete_user(IN p_userid integer) OWNER TO postgres;
+
+--
+-- TOC entry 334 (class 1255 OID 17224)
+-- Name: ensure_unique_friendship(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.ensure_unique_friendship() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Friendships 
+        WHERE (UserID1 = NEW.UserID1 AND UserID2 = NEW.UserID2) 
+           OR (UserID1 = NEW.UserID2 AND UserID2 = NEW.UserID1)
+    ) THEN
+        RAISE EXCEPTION 'Friendship already exists between these users';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.ensure_unique_friendship() OWNER TO postgres;
+
+--
+-- TOC entry 325 (class 1255 OID 17379)
+-- Name: get_achievement_showcase(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_achievement_showcase(user_id integer) RETURNS TABLE(showcaseid integer, achievementid integer, name character varying, totalachievements integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        ac.showcaseid,
+        ac.achievementid,
+        a.name,
+        ac.totalachievements
+    FROM 
+        AchievementShowcase ac
+    JOIN 
+        Achievements a ON ac.achievementid = a.achievementid
+    WHERE 
+        ac.userid = user_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_achievement_showcase(user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 299 (class 1255 OID 17378)
+-- Name: get_favorite_game_showcase(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_favorite_game_showcase(user_id integer) RETURNS TABLE(showcaseid integer, gameid integer, title character varying, hoursplayed integer, achievementprogress integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        fg.showcaseid,
+        fg.gameid,
+        g.title,
+        fg.hoursplayed,
+        fg.achievementprogress
+    FROM 
+        FavoriteGameShowcase fg
+    JOIN 
+        Games g ON fg.gameid = g.gameid
+    WHERE 
+        fg.userid = user_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_favorite_game_showcase(user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 264 (class 1255 OID 17529)
+-- Name: get_featured_games(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_featured_games(limit_count integer) RETURNS TABLE(gameid integer, title character varying, description text, releasedate date, developer character varying, publisher character varying, price numeric, genrename character varying, salescount bigint)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        g.GameID,
+        g.Title,
+        g.Description,
+        g.ReleaseDate,
+        g.Developer,
+        g.Publisher,
+        g.Price,
+        gen.GenreName,
+        COUNT(p.PurchaseID) AS SalesCount
+    FROM 
+        Games g
+    JOIN 
+        Purchases p ON g.GameID = p.GameID
+    JOIN 
+        Genres gen ON g.GenreID = gen.GenreID
+    GROUP BY 
+        g.GameID, g.Title, g.Description, g.ReleaseDate, g.Developer, g.Publisher, g.Price, gen.GenreName
+    ORDER BY 
+        SalesCount DESC,
+        g.ReleaseDate DESC
+    LIMIT limit_count;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_featured_games(limit_count integer) OWNER TO postgres;
+
+--
+-- TOC entry 304 (class 1255 OID 17246)
+-- Name: get_friends_who_bought_game(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_friends_who_bought_game(user_id integer, game_id integer) RETURNS TABLE(friendid integer, friendname character varying, purchasedate date)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        u.UserID AS FriendID,
+        u.UserName AS FriendName,
+        p.PurchaseDate
+    FROM 
+        Users u
+    JOIN 
+        Purchases p ON u.UserID = p.UserID
+    JOIN 
+        Friendships f ON (u.UserID = f.UserID1 OR u.UserID = f.UserID2)
+    WHERE 
+        p.GameID = game_id
+        AND (f.UserID1 = user_id OR f.UserID2 = user_id)
+        AND u.UserID != user_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_friends_who_bought_game(user_id integer, game_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 314 (class 1255 OID 17533)
+-- Name: get_games_by_genre(character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_games_by_genre(genre_name character varying) RETURNS TABLE(gameid integer, title character varying, description text, releasedate date, developer character varying, publisher character varying, price numeric, genrename character varying)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        g.GameID,
+        g.Title,
+        g.Description,
+        g.ReleaseDate,
+        g.Developer,
+        g.Publisher,
+        g.Price,
+        gen.GenreName
+    FROM 
+        Games g
+    JOIN 
+        Genres gen ON g.GenreID = gen.GenreID
+    WHERE 
+        gen.GenreName = genre_name;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_games_by_genre(genre_name character varying) OWNER TO postgres;
+
+--
+-- TOC entry 307 (class 1255 OID 17531)
+-- Name: get_games_popular_with_friends(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_games_popular_with_friends(user_id integer) RETURNS TABLE(gameid integer, title character varying, description text, releasedate date, developer character varying, publisher character varying, price numeric, genrename character varying, friendpurchasecount bigint)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        g.GameID, 
+        g.Title, 
+        g.Description, 
+        g.ReleaseDate, 
+        g.Developer, 
+        g.Publisher, 
+        g.Price,
+        gen.GenreName,
+        COUNT(p.PurchaseID) AS FriendPurchaseCount
+    FROM 
+        Games g
+    JOIN 
+        Purchases p ON g.GameID = p.GameID
+    JOIN 
+        Friendships f ON (p.UserID = f.UserID1 OR p.UserID = f.UserID2)
+    JOIN 
+        Genres gen ON g.GenreID = gen.GenreID
+    WHERE 
+        (f.UserID1 = user_id OR f.UserID2 = user_id) 
+        AND p.UserID != user_id
+    GROUP BY 
+        g.GameID, g.Title, g.Description, g.ReleaseDate, g.Developer, g.Publisher, g.Price, gen.GenreName
+    ORDER BY 
+        FriendPurchaseCount DESC;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_games_popular_with_friends(user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 268 (class 1255 OID 17345)
+-- Name: get_profile(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_profile(user_id integer) RETURNS TABLE(userid integer, bio text, location character varying, website character varying, profilepicture character varying)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT p.UserID, p.Bio, p.Location, p.Website, p.ProfilePicture
+    FROM Profiles p
+    WHERE p.UserID = user_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_profile(user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 301 (class 1255 OID 17346)
+-- Name: get_profile_showcases(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_profile_showcases(user_id integer) RETURNS TABLE(showcaseid integer, showcasetype character varying, showcasedata jsonb)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT ps.ShowcaseID, ps.ShowcaseType, ps.ShowcaseData
+    FROM ProfileShowcases ps
+    WHERE ps.UserID = user_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_profile_showcases(user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 254 (class 1255 OID 17525)
+-- Name: get_recent_games(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_recent_games(limit_count integer) RETURNS TABLE(gameid integer, title character varying, description text, releasedate date, developer character varying, publisher character varying, price numeric, genrename character varying)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        g.GameID,
+        g.Title,
+        g.Description,
+        g.ReleaseDate,
+        g.Developer,
+        g.Publisher,
+        g.Price,
+        gen.GenreName
+    FROM 
+        Games g
+    JOIN 
+        Genres gen ON g.GenreID = gen.GenreID
+    ORDER BY 
+        g.ReleaseDate DESC
+    LIMIT limit_count;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_recent_games(limit_count integer) OWNER TO postgres;
+
+--
+-- TOC entry 303 (class 1255 OID 17530)
+-- Name: get_recommended_games(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_recommended_games(user_id integer) RETURNS TABLE(gameid integer, title character varying, description text, releasedate date, developer character varying, publisher character varying, price numeric, genrename character varying)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        g.GameID,
+        g.Title,
+        g.Description,
+        g.ReleaseDate,
+        g.Developer,
+        g.Publisher,
+        g.Price,
+        gen.GenreName
+    FROM 
+        Games g
+    JOIN 
+        Purchases p ON g.GameID = p.GameID
+    JOIN 
+        Genres gen ON g.GenreID = gen.GenreID
+    WHERE 
+        p.UserID = user_id
+        AND g.GenreID IN (SELECT gen.GenreID FROM Purchases pur JOIN Games gm ON pur.GameID = gm.GameID WHERE pur.UserID = user_id)
+    ORDER BY 
+        g.ReleaseDate DESC;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_recommended_games(user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 263 (class 1255 OID 17532)
+-- Name: get_top_selling_games(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_top_selling_games(limit_count integer) RETURNS TABLE(gameid integer, title character varying, description text, releasedate date, developer character varying, publisher character varying, price numeric, genrename character varying, salescount bigint)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        g.GameID,
+        g.Title,
+        g.Description,
+        g.ReleaseDate,
+        g.Developer,
+        g.Publisher,
+        g.Price,
+        gen.GenreName,
+        COUNT(p.PurchaseID) AS SalesCount
+    FROM 
+        Games g
+    JOIN 
+        Purchases p ON g.GameID = p.GameID
+    JOIN 
+        Genres gen ON g.GenreID = gen.GenreID
+    GROUP BY 
+        g.GameID, g.Title, g.Description, g.ReleaseDate, g.Developer, g.Publisher, g.Price, gen.GenreName
+    ORDER BY 
+        SalesCount DESC
+    LIMIT limit_count;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_top_selling_games(limit_count integer) OWNER TO postgres;
+
+--
+-- TOC entry 309 (class 1255 OID 17537)
+-- Name: get_user_friends(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_user_friends(user_id integer) RETURNS TABLE(friendid integer, friendname character varying, status character varying)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        u.UserID AS FriendID,
+        u.Username AS FriendName,
+        f.Status
+    FROM 
+        Users u
+    JOIN 
+        Friendships f ON (u.UserID = f.UserID1 OR u.UserID = f.UserID2)
+    WHERE 
+        (f.UserID1 = user_id OR f.UserID2 = user_id)
+        AND u.UserID != user_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_user_friends(user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 317 (class 1255 OID 17483)
+-- Name: get_user_id(character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_user_id(p_username character varying) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN (
+        SELECT UserID
+        FROM Users
+        WHERE Users.UserName = p_username
+    );
+END;
+$$;
+
+
+ALTER FUNCTION public.get_user_id(p_username character varying) OWNER TO postgres;
+
+--
+-- TOC entry 262 (class 1255 OID 17526)
+-- Name: get_user_library(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_user_library(user_id integer) RETURNS TABLE(gameid integer, title character varying, description text, releasedate date, developer character varying, publisher character varying, price numeric, genrename character varying, purchasedate date)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        g.GameID,
+        g.Title,
+        g.Description,
+        g.ReleaseDate,
+        g.Developer,
+        g.Publisher,
+        g.Price,
+        gen.GenreName,
+        p.PurchaseDate
+    FROM 
+        Games g
+    JOIN 
+        Purchases p ON g.GameID = p.GameID
+    JOIN 
+        Genres gen ON g.GenreID = gen.GenreID
+    WHERE 
+        p.UserID = user_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_user_library(user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 283 (class 1255 OID 17535)
+-- Name: purchase_cart(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.purchase_cart(user_id integer) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    game RECORD;
+BEGIN
+    -- Loop through all games in the user's cart
+    FOR game IN (SELECT GameID FROM Cart WHERE UserID = user_id) LOOP
+        -- Add the game to the user's library
+        INSERT INTO Purchases (UserID, GameID, PurchaseDate)
+        VALUES (user_id, game.GameID, NOW());
+    END LOOP;
+
+    -- Empty the user's cart
+    DELETE FROM Cart WHERE UserID = user_id;
+
+    RETURN 'Purchase completed successfully. Cart is now empty.';
+END;
+$$;
+
+
+ALTER FUNCTION public.purchase_cart(user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 331 (class 1255 OID 17415)
+-- Name: remove_achievement_showcase(integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.remove_achievement_showcase(IN user_id integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM AchievementShowcase WHERE UserID = user_id;
+END;
+$$;
+
+
+ALTER PROCEDURE public.remove_achievement_showcase(IN user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 289 (class 1255 OID 17414)
+-- Name: remove_favorite_game_showcase(integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.remove_favorite_game_showcase(IN user_id integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM FavoriteGameShowcase WHERE UserID = user_id;
+END;
+$$;
+
+
+ALTER PROCEDURE public.remove_favorite_game_showcase(IN user_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 276 (class 1255 OID 17272)
+-- Name: remove_from_cart(integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.remove_from_cart(IN user_id integer, IN game_id integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Delete the game from the user's cart
+    DELETE FROM Cart WHERE UserID = user_id AND GameID = game_id;
+END;
+$$;
+
+
+ALTER PROCEDURE public.remove_from_cart(IN user_id integer, IN game_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 312 (class 1255 OID 17482)
+-- Name: remove_from_favorites(integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.remove_from_favorites(IN p_userid integer, IN p_gameid integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM FavoriteGames WHERE UserID = p_userid AND GameID = p_gameid;
+END;
+$$;
+
+
+ALTER PROCEDURE public.remove_from_favorites(IN p_userid integer, IN p_gameid integer) OWNER TO postgres;
+
+--
+-- TOC entry 255 (class 1255 OID 17297)
+-- Name: remove_from_wishlist(integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.remove_from_wishlist(IN user_id integer, IN game_id integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM Wishlist WHERE UserID = user_id AND GameID = game_id;
+END;
+$$;
+
+
+ALTER PROCEDURE public.remove_from_wishlist(IN user_id integer, IN game_id integer) OWNER TO postgres;
+
+--
+-- TOC entry 291 (class 1255 OID 17520)
+-- Name: search_games_by_title(character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.search_games_by_title(p_title character varying) RETURNS TABLE(gameid integer, title character varying, description text, releasedate date, developer character varying, publisher character varying, price numeric, genrename character varying)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        g.GameID,
+        g.Title,
+        g.Description,
+        g.ReleaseDate,
+        g.Developer,
+        g.Publisher,
+        g.Price,
+        gen.GenreName
+    FROM 
+        Games g
+    JOIN 
+        Genres gen ON g.GenreID = gen.GenreID
+    WHERE 
+        g.Title ILIKE '%' || p_title || '%';
+END;
+$$;
+
+
+ALTER FUNCTION public.search_games_by_title(p_title character varying) OWNER TO postgres;
+
+--
+-- TOC entry 297 (class 1255 OID 17226)
+-- Name: update_review_count(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_review_count() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    UPDATE Games
+    SET ReviewCount = (SELECT COUNT(*) FROM Reviews WHERE GameID = NEW.GameID)
+    WHERE GameID = NEW.GameID;
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_review_count() OWNER TO postgres;
+
+--
+-- TOC entry 294 (class 1255 OID 17491)
+-- Name: view_cart(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.view_cart(user_id integer) RETURNS TABLE(gameid integer, title character varying, description text, releasedate date, developer character varying, publisher character varying, dateadded timestamp without time zone, price numeric)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        g.GameID,
+        g.Title,
+        g.Description,
+        g.ReleaseDate,
+        g.Developer,
+        g.Publisher,
+        c.DateAdded,
+        g.Price
+    FROM
+        Cart c
+    JOIN
+        Games g ON c.GameID = g.GameID
+    WHERE
+        c.UserID = user_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.view_cart(user_id integer) OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 227 (class 1259 OID 17129)
+-- Name: achievements; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.achievements (
+    achievementid integer NOT NULL,
+    gameid integer NOT NULL,
+    name character varying(255) NOT NULL,
+    description text
+);
+
+
+ALTER TABLE public.achievements OWNER TO postgres;
+
+--
+-- TOC entry 226 (class 1259 OID 17128)
+-- Name: achievements_achievementid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.achievements_achievementid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.achievements_achievementid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5144 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: achievements_achievementid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.achievements_achievementid_seq OWNED BY public.achievements.achievementid;
+
+
+--
+-- TOC entry 250 (class 1259 OID 17398)
+-- Name: achievementshowcase; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.achievementshowcase (
+    showcaseid integer NOT NULL,
+    userid integer NOT NULL,
+    achievementid integer NOT NULL,
+    totalachievements integer
+);
+
+
+ALTER TABLE public.achievementshowcase OWNER TO postgres;
+
+--
+-- TOC entry 249 (class 1259 OID 17397)
+-- Name: achievementshowcase_showcaseid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.achievementshowcase_showcaseid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.achievementshowcase_showcaseid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5145 (class 0 OID 0)
+-- Dependencies: 249
+-- Name: achievementshowcase_showcaseid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.achievementshowcase_showcaseid_seq OWNED BY public.achievementshowcase.showcaseid;
+
+
+--
+-- TOC entry 240 (class 1259 OID 17249)
+-- Name: cart; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.cart (
+    cartid integer NOT NULL,
+    userid integer NOT NULL,
+    gameid integer NOT NULL,
+    dateadded timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.cart OWNER TO postgres;
+
+--
+-- TOC entry 239 (class 1259 OID 17248)
+-- Name: cart_cartid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.cart_cartid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.cart_cartid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5146 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: cart_cartid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.cart_cartid_seq OWNED BY public.cart.cartid;
+
+
+--
+-- TOC entry 225 (class 1259 OID 17115)
+-- Name: communityposts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.communityposts (
+    postid integer NOT NULL,
+    userid integer NOT NULL,
+    content text NOT NULL,
+    postdate date
+);
+
+
+ALTER TABLE public.communityposts OWNER TO postgres;
+
+--
+-- TOC entry 224 (class 1259 OID 17114)
+-- Name: communityposts_postid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.communityposts_postid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.communityposts_postid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5147 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: communityposts_postid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.communityposts_postid_seq OWNED BY public.communityposts.postid;
+
+
+--
+-- TOC entry 232 (class 1259 OID 17177)
+-- Name: dlcs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.dlcs (
+    dlcid integer NOT NULL,
+    gameid integer NOT NULL,
+    title character varying(255) NOT NULL,
+    description text,
+    releasedate date,
+    price numeric(10,2)
+);
+
+
+ALTER TABLE public.dlcs OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1259 OID 17176)
+-- Name: dlcs_dlcid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.dlcs_dlcid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.dlcs_dlcid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5148 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: dlcs_dlcid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.dlcs_dlcid_seq OWNED BY public.dlcs.dlcid;
+
+
+--
+-- TOC entry 230 (class 1259 OID 17161)
+-- Name: earnedachievements; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.earnedachievements (
+    userid integer NOT NULL,
+    achievementid integer NOT NULL,
+    earneddate date
+);
+
+
+ALTER TABLE public.earnedachievements OWNER TO postgres;
+
+--
+-- TOC entry 251 (class 1259 OID 17465)
+-- Name: favoritegames; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.favoritegames (
+    userid integer NOT NULL,
+    gameid integer NOT NULL
+);
+
+
+ALTER TABLE public.favoritegames OWNER TO postgres;
+
+--
+-- TOC entry 248 (class 1259 OID 17381)
+-- Name: favoritegameshowcase; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.favoritegameshowcase (
+    showcaseid integer NOT NULL,
+    userid integer NOT NULL,
+    gameid integer NOT NULL,
+    hoursplayed integer,
+    achievementprogress integer
+);
+
+
+ALTER TABLE public.favoritegameshowcase OWNER TO postgres;
+
+--
+-- TOC entry 247 (class 1259 OID 17380)
+-- Name: favoritegameshowcase_showcaseid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.favoritegameshowcase_showcaseid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.favoritegameshowcase_showcaseid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5149 (class 0 OID 0)
+-- Dependencies: 247
+-- Name: favoritegameshowcase_showcaseid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.favoritegameshowcase_showcaseid_seq OWNED BY public.favoritegameshowcase.showcaseid;
+
+
+--
+-- TOC entry 229 (class 1259 OID 17143)
+-- Name: friendships; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.friendships (
+    friendshipid integer NOT NULL,
+    userid1 integer NOT NULL,
+    userid2 integer NOT NULL,
+    status character varying(50)
+);
+
+
+ALTER TABLE public.friendships OWNER TO postgres;
+
+--
+-- TOC entry 228 (class 1259 OID 17142)
+-- Name: friendships_friendshipid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.friendships_friendshipid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.friendships_friendshipid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5150 (class 0 OID 0)
+-- Dependencies: 228
+-- Name: friendships_friendshipid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.friendships_friendshipid_seq OWNED BY public.friendships.friendshipid;
+
+
+--
+-- TOC entry 235 (class 1259 OID 17199)
+-- Name: gamegenres; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.gamegenres (
+    gameid integer NOT NULL,
+    genreid integer NOT NULL
+);
+
+
+ALTER TABLE public.gamegenres OWNER TO postgres;
+
+--
+-- TOC entry 219 (class 1259 OID 17069)
+-- Name: games; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.games (
+    gameid integer NOT NULL,
+    title character varying(255) NOT NULL,
+    description text,
+    genre character varying(255),
+    releasedate date,
+    developer character varying(255),
+    publisher character varying(255),
+    price numeric(6,2),
+    genreid integer
+);
+
+
+ALTER TABLE public.games OWNER TO postgres;
+
+--
+-- TOC entry 234 (class 1259 OID 17191)
+-- Name: genres; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.genres (
+    genreid integer NOT NULL,
+    genrename character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.genres OWNER TO postgres;
+
+--
+-- TOC entry 236 (class 1259 OID 17219)
+-- Name: game_details; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.game_details AS
+ SELECT g.gameid,
+    g.title,
+    g.description,
+    g.releasedate,
+    g.developer,
+    g.publisher,
+    array_agg(gen.genrename) AS genres
+   FROM ((public.games g
+     JOIN public.gamegenres gg ON ((g.gameid = gg.gameid)))
+     JOIN public.genres gen ON ((gg.genreid = gen.genreid)))
+  GROUP BY g.gameid, g.title, g.description, g.releasedate, g.developer, g.publisher;
+
+
+ALTER VIEW public.game_details OWNER TO postgres;
+
+--
+-- TOC entry 218 (class 1259 OID 17068)
+-- Name: games_gameid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.games_gameid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.games_gameid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5151 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: games_gameid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.games_gameid_seq OWNED BY public.games.gameid;
+
+
+--
+-- TOC entry 233 (class 1259 OID 17190)
+-- Name: genres_genreid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.genres_genreid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.genres_genreid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5152 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: genres_genreid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.genres_genreid_seq OWNED BY public.genres.genreid;
+
+
+--
+-- TOC entry 246 (class 1259 OID 17314)
+-- Name: profiles; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.profiles (
+    profileid integer NOT NULL,
+    userid integer NOT NULL,
+    bio text,
+    location character varying(255),
+    website character varying(255),
+    profilepicture character varying(255)
+);
+
+
+ALTER TABLE public.profiles OWNER TO postgres;
+
+--
+-- TOC entry 245 (class 1259 OID 17313)
+-- Name: profiles_profileid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.profiles_profileid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.profiles_profileid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5153 (class 0 OID 0)
+-- Dependencies: 245
+-- Name: profiles_profileid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.profiles_profileid_seq OWNED BY public.profiles.profileid;
+
+
+--
+-- TOC entry 221 (class 1259 OID 17078)
+-- Name: purchases; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.purchases (
+    purchaseid integer NOT NULL,
+    userid integer NOT NULL,
+    gameid integer NOT NULL,
+    purchasedate date NOT NULL,
+    paymentmethod character varying(255)
+);
+
+
+ALTER TABLE public.purchases OWNER TO postgres;
+
+--
+-- TOC entry 220 (class 1259 OID 17077)
+-- Name: purchases_purchaseid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.purchases_purchaseid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.purchases_purchaseid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5154 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: purchases_purchaseid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.purchases_purchaseid_seq OWNED BY public.purchases.purchaseid;
+
+
+--
+-- TOC entry 237 (class 1259 OID 17230)
+-- Name: recent_games; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.recent_games AS
+ SELECT gameid,
+    title,
+    description,
+    releasedate,
+    developer,
+    publisher
+   FROM public.games
+  ORDER BY releasedate DESC
+ LIMIT 10;
+
+
+ALTER VIEW public.recent_games OWNER TO postgres;
+
+--
+-- TOC entry 223 (class 1259 OID 17095)
+-- Name: reviews; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.reviews (
+    reviewid integer NOT NULL,
+    userid integer NOT NULL,
+    gameid integer NOT NULL,
+    rating integer,
+    comment text,
+    reviewdate date,
+    CONSTRAINT reviews_rating_check CHECK (((rating >= 1) AND (rating <= 10)))
+);
+
+
+ALTER TABLE public.reviews OWNER TO postgres;
+
+--
+-- TOC entry 222 (class 1259 OID 17094)
+-- Name: reviews_reviewid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.reviews_reviewid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.reviews_reviewid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5155 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: reviews_reviewid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.reviews_reviewid_seq OWNED BY public.reviews.reviewid;
+
+
+--
+-- TOC entry 238 (class 1259 OID 17236)
+-- Name: top_selling_games; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.top_selling_games AS
+ SELECT g.gameid,
+    g.title,
+    g.description,
+    g.releasedate,
+    g.developer,
+    g.publisher,
+    count(p.purchaseid) AS salescount
+   FROM (public.games g
+     JOIN public.purchases p ON ((g.gameid = p.gameid)))
+  GROUP BY g.gameid, g.title, g.description, g.releasedate, g.developer, g.publisher
+  ORDER BY (count(p.purchaseid)) DESC;
+
+
+ALTER VIEW public.top_selling_games OWNER TO postgres;
+
+--
+-- TOC entry 217 (class 1259 OID 17058)
+-- Name: users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users (
+    userid integer NOT NULL,
+    username character varying(255) NOT NULL,
+    passwordhash character varying(255)
+);
+
+
+ALTER TABLE public.users OWNER TO postgres;
+
+--
+-- TOC entry 244 (class 1259 OID 17308)
+-- Name: user_friends; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.user_friends AS
+ SELECT f.userid1 AS userid,
+    f.userid2 AS friendid,
+    u2.username AS friendname
+   FROM (public.friendships f
+     JOIN public.users u2 ON ((f.userid2 = u2.userid)))
+  WHERE ((f.status)::text = 'accepted'::text)
+UNION
+ SELECT f.userid2 AS userid,
+    f.userid1 AS friendid,
+    u1.username AS friendname
+   FROM (public.friendships f
+     JOIN public.users u1 ON ((f.userid1 = u1.userid)))
+  WHERE ((f.status)::text = 'accepted'::text);
+
+
+ALTER VIEW public.user_friends OWNER TO postgres;
+
+--
+-- TOC entry 243 (class 1259 OID 17303)
+-- Name: user_library; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.user_library AS
+ SELECT p.userid,
+    g.gameid,
+    g.title,
+    g.description,
+    g.releasedate,
+    g.developer,
+    g.publisher,
+    p.purchasedate
+   FROM (public.purchases p
+     JOIN public.games g ON ((p.gameid = g.gameid)))
+  ORDER BY p.purchasedate DESC;
+
+
+ALTER VIEW public.user_library OWNER TO postgres;
+
+--
+-- TOC entry 216 (class 1259 OID 17057)
+-- Name: users_userid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.users_userid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.users_userid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5156 (class 0 OID 0)
+-- Dependencies: 216
+-- Name: users_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.users_userid_seq OWNED BY public.users.userid;
+
+
+--
+-- TOC entry 253 (class 1259 OID 17515)
+-- Name: view_cart; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.view_cart AS
+ SELECT c.userid,
+    g.gameid,
+    g.title,
+    g.description,
+    g.releasedate,
+    g.developer,
+    g.publisher,
+    g.price,
+    gen.genrename,
+    c.dateadded
+   FROM ((public.cart c
+     JOIN public.games g ON ((c.gameid = g.gameid)))
+     JOIN public.genres gen ON ((g.genreid = gen.genreid)));
+
+
+ALTER VIEW public.view_cart OWNER TO postgres;
+
+--
+-- TOC entry 242 (class 1259 OID 17279)
+-- Name: wishlist; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.wishlist (
+    wishlistid integer NOT NULL,
+    userid integer NOT NULL,
+    gameid integer NOT NULL,
+    dateadded timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.wishlist OWNER TO postgres;
+
+--
+-- TOC entry 252 (class 1259 OID 17510)
+-- Name: view_wishlist; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.view_wishlist AS
+ SELECT w.userid,
+    g.gameid,
+    g.title,
+    g.description,
+    g.releasedate,
+    g.developer,
+    g.publisher,
+    g.price,
+    gen.genrename,
+    w.dateadded
+   FROM ((public.wishlist w
+     JOIN public.games g ON ((w.gameid = g.gameid)))
+     JOIN public.genres gen ON ((g.genreid = gen.genreid)));
+
+
+ALTER VIEW public.view_wishlist OWNER TO postgres;
+
+--
+-- TOC entry 241 (class 1259 OID 17278)
+-- Name: wishlist_wishlistid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.wishlist_wishlistid_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.wishlist_wishlistid_seq OWNER TO postgres;
+
+--
+-- TOC entry 5157 (class 0 OID 0)
+-- Dependencies: 241
+-- Name: wishlist_wishlistid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.wishlist_wishlistid_seq OWNED BY public.wishlist.wishlistid;
+
+
+--
+-- TOC entry 4876 (class 2604 OID 17132)
+-- Name: achievements achievementid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.achievements ALTER COLUMN achievementid SET DEFAULT nextval('public.achievements_achievementid_seq'::regclass);
+
+
+--
+-- TOC entry 4886 (class 2604 OID 17401)
+-- Name: achievementshowcase showcaseid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.achievementshowcase ALTER COLUMN showcaseid SET DEFAULT nextval('public.achievementshowcase_showcaseid_seq'::regclass);
+
+
+--
+-- TOC entry 4880 (class 2604 OID 17252)
+-- Name: cart cartid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cart ALTER COLUMN cartid SET DEFAULT nextval('public.cart_cartid_seq'::regclass);
+
+
+--
+-- TOC entry 4875 (class 2604 OID 17118)
+-- Name: communityposts postid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.communityposts ALTER COLUMN postid SET DEFAULT nextval('public.communityposts_postid_seq'::regclass);
+
+
+--
+-- TOC entry 4878 (class 2604 OID 17180)
+-- Name: dlcs dlcid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.dlcs ALTER COLUMN dlcid SET DEFAULT nextval('public.dlcs_dlcid_seq'::regclass);
+
+
+--
+-- TOC entry 4885 (class 2604 OID 17384)
+-- Name: favoritegameshowcase showcaseid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.favoritegameshowcase ALTER COLUMN showcaseid SET DEFAULT nextval('public.favoritegameshowcase_showcaseid_seq'::regclass);
+
+
+--
+-- TOC entry 4877 (class 2604 OID 17146)
+-- Name: friendships friendshipid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.friendships ALTER COLUMN friendshipid SET DEFAULT nextval('public.friendships_friendshipid_seq'::regclass);
+
+
+--
+-- TOC entry 4872 (class 2604 OID 17072)
+-- Name: games gameid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.games ALTER COLUMN gameid SET DEFAULT nextval('public.games_gameid_seq'::regclass);
+
+
+--
+-- TOC entry 4879 (class 2604 OID 17194)
+-- Name: genres genreid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.genres ALTER COLUMN genreid SET DEFAULT nextval('public.genres_genreid_seq'::regclass);
+
+
+--
+-- TOC entry 4884 (class 2604 OID 17317)
+-- Name: profiles profileid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.profiles ALTER COLUMN profileid SET DEFAULT nextval('public.profiles_profileid_seq'::regclass);
+
+
+--
+-- TOC entry 4873 (class 2604 OID 17081)
+-- Name: purchases purchaseid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.purchases ALTER COLUMN purchaseid SET DEFAULT nextval('public.purchases_purchaseid_seq'::regclass);
+
+
+--
+-- TOC entry 4874 (class 2604 OID 17098)
+-- Name: reviews reviewid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews ALTER COLUMN reviewid SET DEFAULT nextval('public.reviews_reviewid_seq'::regclass);
+
+
+--
+-- TOC entry 4871 (class 2604 OID 17061)
+-- Name: users userid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN userid SET DEFAULT nextval('public.users_userid_seq'::regclass);
+
+
+--
+-- TOC entry 4882 (class 2604 OID 17282)
+-- Name: wishlist wishlistid; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.wishlist ALTER COLUMN wishlistid SET DEFAULT nextval('public.wishlist_wishlistid_seq'::regclass);
+
+
+--
+-- TOC entry 5118 (class 0 OID 17129)
+-- Dependencies: 227
+-- Data for Name: achievements; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.achievements (achievementid, gameid, name, description) FROM stdin;
+1	1	First Blood	First kill in the game
+2	2	Master Explorer	Explored all regions
+\.
+
+
+--
+-- TOC entry 5136 (class 0 OID 17398)
+-- Dependencies: 250
+-- Data for Name: achievementshowcase; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.achievementshowcase (showcaseid, userid, achievementid, totalachievements) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5128 (class 0 OID 17249)
+-- Dependencies: 240
+-- Data for Name: cart; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.cart (cartid, userid, gameid, dateadded) FROM stdin;
+52	1	1	2024-07-23 22:02:26.247219
+\.
+
+
+--
+-- TOC entry 5116 (class 0 OID 17115)
+-- Dependencies: 225
+-- Data for Name: communityposts; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.communityposts (postid, userid, content, postdate) FROM stdin;
+1	1	Check out my new achievement!	2022-07-01
+2	2	Loving this game!	2022-08-01
+\.
+
+
+--
+-- TOC entry 5123 (class 0 OID 17177)
+-- Dependencies: 232
+-- Data for Name: dlcs; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.dlcs (dlcid, gameid, title, description, releasedate, price) FROM stdin;
+1	1	DLC1	Extra content for Game1	2022-09-01	9.99
+2	2	DLC2	Extra content for Game2	2022-10-01	14.99
+\.
+
+
+--
+-- TOC entry 5121 (class 0 OID 17161)
+-- Dependencies: 230
+-- Data for Name: earnedachievements; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.earnedachievements (userid, achievementid, earneddate) FROM stdin;
+1	1	2022-11-01
+2	2	2022-12-01
+\.
+
+
+--
+-- TOC entry 5137 (class 0 OID 17465)
+-- Dependencies: 251
+-- Data for Name: favoritegames; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.favoritegames (userid, gameid) FROM stdin;
+17	7
+\.
+
+
+--
+-- TOC entry 5134 (class 0 OID 17381)
+-- Dependencies: 248
+-- Data for Name: favoritegameshowcase; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.favoritegameshowcase (showcaseid, userid, gameid, hoursplayed, achievementprogress) FROM stdin;
+19	1	1	50	80
+\.
+
+
+--
+-- TOC entry 5120 (class 0 OID 17143)
+-- Dependencies: 229
+-- Data for Name: friendships; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.friendships (friendshipid, userid1, userid2, status) FROM stdin;
+1	1	2	accepted
+3	1	5	accepted
+4	2	4	accepted
+5	5	4	accepted
+6	17	20	accepted
+7	17	1	accepted
+8	17	2	accepted
+9	17	4	accepted
+\.
+
+
+--
+-- TOC entry 5126 (class 0 OID 17199)
+-- Dependencies: 235
+-- Data for Name: gamegenres; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.gamegenres (gameid, genreid) FROM stdin;
+1	1
+1	2
+2	3
+2	4
+2	2
+3	3
+4	4
+5	1
+1	3
+3	2
+4	1
+5	4
+\.
+
+
+--
+-- TOC entry 5110 (class 0 OID 17069)
+-- Dependencies: 219
+-- Data for Name: games; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.games (gameid, title, description, genre, releasedate, developer, publisher, price, genreid) FROM stdin;
+1	Game1	Description1	Action	2022-01-01	Dev1	Pub1	4.99	1
+12	Game 15	Description 15	Action	2023-06-01	Dev 6	Pub 6	9.99	1
+3	Game A	Description A	Action	2023-12-01	Dev A	Pub A	4.99	1
+13	Game 16	Description 16	Action	2023-07-01	Dev 7	Pub 7	4.99	1
+10	Game 13	Description 13	Action	2023-04-01	Dev 4	Pub 4	4.99	1
+6	Game D	Description D	Adventure	2024-02-10	Dev D	Pub D	14.99	2
+7	Game 10	Description 10	Adventure	2023-01-01	Dev 1	Pub 1	14.99	2
+11	Game 14	Description 14	Adventure	2023-05-01	Dev 5	Pub 5	14.99	2
+2	Game2	Description2	RPG	2022-02-01	Dev2	Pub2	4.99	3
+4	Game B	Description B	RPG	2024-01-15	Dev B	Pub B	9.99	3
+5	Game C	Description C	RPG	2023-11-20	Dev C	Pub C	9.99	3
+8	Game 11	Description 11	RPG	2023-02-01	Dev 2	Pub 2	4.99	3
+9	Game 12	Description 12	RPG	2023-03-01	Dev 3	Pub 3	4.99	3
+\.
+
+
+--
+-- TOC entry 5125 (class 0 OID 17191)
+-- Dependencies: 234
+-- Data for Name: genres; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.genres (genreid, genrename) FROM stdin;
+1	Action
+2	Adventure
+3	RPG
+4	Simulation
+5	Strategy
+\.
+
+
+--
+-- TOC entry 5132 (class 0 OID 17314)
+-- Dependencies: 246
+-- Data for Name: profiles; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.profiles (profileid, userid, bio, location, website, profilepicture) FROM stdin;
+3	2	testbio	testlocation	test.com	path/to/test
+1	1	Test Bio	Test Location	http://test.com	path/to/test.png
+4	17	bio	location	website	url
+5	4	This is a default bio.	user3	\N	default_picture.png
+6	5	This is a default bio.	user4	\N	default_picture.png
+7	6	This is a default bio.	user5	\N	default_picture.png
+8	7	This is a default bio.	user6	\N	default_picture.png
+9	8	This is a default bio.	testUser	\N	default_picture.png
+10	15	This is a default bio.	testUser	\N	default_picture.png
+11	20	This is a default bio.	bobbuilder	\N	default_picture.png
+12	25	This is a default bio.	default location	\N	default_picture.png
+\.
+
+
+--
+-- TOC entry 5112 (class 0 OID 17078)
+-- Dependencies: 221
+-- Data for Name: purchases; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.purchases (purchaseid, userid, gameid, purchasedate, paymentmethod) FROM stdin;
+1	1	1	2022-03-01	Credit Card
+2	2	2	2022-04-01	PayPal
+18	1	1	2023-12-01	Credit Card
+19	2	1	2023-12-02	Credit Card
+20	5	2	2023-12-03	PayPal
+21	4	2	2023-12-04	PayPal
+22	1	4	2023-12-05	Credit Card
+23	2	5	2023-12-06	Credit Card
+24	5	4	2023-12-07	PayPal
+25	4	5	2023-12-08	PayPal
+26	1	5	2023-12-09	Credit Card
+27	2	4	2023-12-10	Credit Card
+28	5	1	2023-12-01	Credit Card
+29	6	1	2023-12-02	Credit Card
+41	17	1	2024-07-25	\N
+\.
+
+
+--
+-- TOC entry 5114 (class 0 OID 17095)
+-- Dependencies: 223
+-- Data for Name: reviews; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.reviews (reviewid, userid, gameid, rating, comment, reviewdate) FROM stdin;
+1	1	1	8	Great game!	2022-05-01
+2	2	2	9	Amazing experience!	2022-06-01
+\.
+
+
+--
+-- TOC entry 5108 (class 0 OID 17058)
+-- Dependencies: 217
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.users (userid, username, passwordhash) FROM stdin;
+1	user1	$2a$06$7ai3HTTie2veB8q46Ocl2eSBldxR0VQZ/NmAccpqQg1e24mAzzV6a
+2	user2	$2a$06$FFJpX7/BvMYF93jvUe.8S.niQLhnqxLT9vTUkhOBrRcx.GSudftp.
+4	user3	$2a$06$M1nDl.IhdQXvKcyJ/9v.duJnn90T1unQQDI4ELXFEOSUa/IB4WwFa
+5	user4	$2a$06$frcuoUV2w.s1Vvjq.lY05.VyQgXK6zLCZiUGVo.6k9sZ/MLTgBIZ6
+6	user5	$2a$06$GmMOYkkgK2QFNm5adsioB.MeztF6z2x1W6JnfxfgTa22lcP2jgjxG
+7	user6	$2a$06$jXxJy4eSpMVmKj.J9jPfzegZ1YLtTuNF/6gDBMEmrY7u0WgyDx1P.
+8	testUser	$2a$06$YsD3wg/li8VkvQgo6UfEtO9b8qYK5QVuQonSHEn1FY1ipSr6Sa0eO
+15	testUser	$2a$06$vm0IeVaHBDlCtivd23OnNe7vlrPHq/HaVzocI8ngSh4RBuaCsHAOG
+17	alicewonder	$2a$06$FPJrRwAHsCTDvYWTj0jjfeExfl6.zYfQScrcai4yj0stt/eiN7h1u
+20	bobbuilder	$2a$06$wOs0e/jTnNFzbnQ9WZIBoedU6.kwux6zpEz55jK.QVUcAlgF4IU2q
+25	michael 	$2a$06$MAgdkM4q.xKKHmEOGBZlduwrPrFWr/5MLVyt1Enzw5hSMzHyys3Pm
+\.
+
+
+--
+-- TOC entry 5130 (class 0 OID 17279)
+-- Dependencies: 242
+-- Data for Name: wishlist; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.wishlist (wishlistid, userid, gameid, dateadded) FROM stdin;
+2	1	2	2024-07-22 14:30:28.357556
+35	17	12	2024-07-24 21:21:30.533757
+36	17	13	2024-07-24 21:21:30.533757
+\.
+
+
+--
+-- TOC entry 5158 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: achievements_achievementid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.achievements_achievementid_seq', 2, true);
+
+
+--
+-- TOC entry 5159 (class 0 OID 0)
+-- Dependencies: 249
+-- Name: achievementshowcase_showcaseid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.achievementshowcase_showcaseid_seq', 17, true);
+
+
+--
+-- TOC entry 5160 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: cart_cartid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.cart_cartid_seq', 62, true);
+
+
+--
+-- TOC entry 5161 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: communityposts_postid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.communityposts_postid_seq', 2, true);
+
+
+--
+-- TOC entry 5162 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: dlcs_dlcid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.dlcs_dlcid_seq', 2, true);
+
+
+--
+-- TOC entry 5163 (class 0 OID 0)
+-- Dependencies: 247
+-- Name: favoritegameshowcase_showcaseid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.favoritegameshowcase_showcaseid_seq', 19, true);
+
+
+--
+-- TOC entry 5164 (class 0 OID 0)
+-- Dependencies: 228
+-- Name: friendships_friendshipid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.friendships_friendshipid_seq', 9, true);
+
+
+--
+-- TOC entry 5165 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: games_gameid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.games_gameid_seq', 13, true);
+
+
+--
+-- TOC entry 5166 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: genres_genreid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.genres_genreid_seq', 5, true);
+
+
+--
+-- TOC entry 5167 (class 0 OID 0)
+-- Dependencies: 245
+-- Name: profiles_profileid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.profiles_profileid_seq', 12, true);
+
+
+--
+-- TOC entry 5168 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: purchases_purchaseid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.purchases_purchaseid_seq', 42, true);
+
+
+--
+-- TOC entry 5169 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: reviews_reviewid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.reviews_reviewid_seq', 2, true);
+
+
+--
+-- TOC entry 5170 (class 0 OID 0)
+-- Dependencies: 216
+-- Name: users_userid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.users_userid_seq', 25, true);
+
+
+--
+-- TOC entry 5171 (class 0 OID 0)
+-- Dependencies: 241
+-- Name: wishlist_wishlistid_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.wishlist_wishlistid_seq', 36, true);
+
+
+--
+-- TOC entry 4900 (class 2606 OID 17136)
+-- Name: achievements achievements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.achievements
+    ADD CONSTRAINT achievements_pkey PRIMARY KEY (achievementid);
+
+
+--
+-- TOC entry 4926 (class 2606 OID 17403)
+-- Name: achievementshowcase achievementshowcase_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.achievementshowcase
+    ADD CONSTRAINT achievementshowcase_pkey PRIMARY KEY (showcaseid);
+
+
+--
+-- TOC entry 4916 (class 2606 OID 17255)
+-- Name: cart cart_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cart
+    ADD CONSTRAINT cart_pkey PRIMARY KEY (cartid);
+
+
+--
+-- TOC entry 4898 (class 2606 OID 17122)
+-- Name: communityposts communityposts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.communityposts
+    ADD CONSTRAINT communityposts_pkey PRIMARY KEY (postid);
+
+
+--
+-- TOC entry 4908 (class 2606 OID 17184)
+-- Name: dlcs dlcs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.dlcs
+    ADD CONSTRAINT dlcs_pkey PRIMARY KEY (dlcid);
+
+
+--
+-- TOC entry 4906 (class 2606 OID 17165)
+-- Name: earnedachievements earnedachievements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.earnedachievements
+    ADD CONSTRAINT earnedachievements_pkey PRIMARY KEY (userid, achievementid);
+
+
+--
+-- TOC entry 4928 (class 2606 OID 17469)
+-- Name: favoritegames favoritegames_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.favoritegames
+    ADD CONSTRAINT favoritegames_pkey PRIMARY KEY (userid, gameid);
+
+
+--
+-- TOC entry 4924 (class 2606 OID 17386)
+-- Name: favoritegameshowcase favoritegameshowcase_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.favoritegameshowcase
+    ADD CONSTRAINT favoritegameshowcase_pkey PRIMARY KEY (showcaseid);
+
+
+--
+-- TOC entry 4902 (class 2606 OID 17148)
+-- Name: friendships friendships_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.friendships
+    ADD CONSTRAINT friendships_pkey PRIMARY KEY (friendshipid);
+
+
+--
+-- TOC entry 4904 (class 2606 OID 17150)
+-- Name: friendships friendships_userid1_userid2_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.friendships
+    ADD CONSTRAINT friendships_userid1_userid2_key UNIQUE (userid1, userid2);
+
+
+--
+-- TOC entry 4914 (class 2606 OID 17203)
+-- Name: gamegenres gamegenres_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.gamegenres
+    ADD CONSTRAINT gamegenres_pkey PRIMARY KEY (gameid, genreid);
+
+
+--
+-- TOC entry 4891 (class 2606 OID 17076)
+-- Name: games games_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.games
+    ADD CONSTRAINT games_pkey PRIMARY KEY (gameid);
+
+
+--
+-- TOC entry 4910 (class 2606 OID 17198)
+-- Name: genres genres_genrename_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.genres
+    ADD CONSTRAINT genres_genrename_key UNIQUE (genrename);
+
+
+--
+-- TOC entry 4912 (class 2606 OID 17196)
+-- Name: genres genres_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.genres
+    ADD CONSTRAINT genres_pkey PRIMARY KEY (genreid);
+
+
+--
+-- TOC entry 4920 (class 2606 OID 17321)
+-- Name: profiles profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.profiles
+    ADD CONSTRAINT profiles_pkey PRIMARY KEY (profileid);
+
+
+--
+-- TOC entry 4922 (class 2606 OID 17323)
+-- Name: profiles profiles_userid_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.profiles
+    ADD CONSTRAINT profiles_userid_key UNIQUE (userid);
+
+
+--
+-- TOC entry 4894 (class 2606 OID 17083)
+-- Name: purchases purchases_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.purchases
+    ADD CONSTRAINT purchases_pkey PRIMARY KEY (purchaseid);
+
+
+--
+-- TOC entry 4896 (class 2606 OID 17103)
+-- Name: reviews reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_pkey PRIMARY KEY (reviewid);
+
+
+--
+-- TOC entry 4889 (class 2606 OID 17065)
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (userid);
+
+
+--
+-- TOC entry 4918 (class 2606 OID 17285)
+-- Name: wishlist wishlist_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.wishlist
+    ADD CONSTRAINT wishlist_pkey PRIMARY KEY (wishlistid);
+
+
+--
+-- TOC entry 4892 (class 1259 OID 17228)
+-- Name: idx_game_title; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_game_title ON public.games USING btree (title);
+
+
+--
+-- TOC entry 4956 (class 2620 OID 17225)
+-- Name: friendships unique_friendship_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER unique_friendship_trigger BEFORE INSERT ON public.friendships FOR EACH ROW EXECUTE FUNCTION public.ensure_unique_friendship();
+
+
+--
+-- TOC entry 4955 (class 2620 OID 17227)
+-- Name: reviews update_review_count_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_review_count_trigger AFTER INSERT OR DELETE ON public.reviews FOR EACH ROW EXECUTE FUNCTION public.update_review_count();
+
+
+--
+-- TOC entry 4934 (class 2606 OID 17137)
+-- Name: achievements achievements_gameid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.achievements
+    ADD CONSTRAINT achievements_gameid_fkey FOREIGN KEY (gameid) REFERENCES public.games(gameid);
+
+
+--
+-- TOC entry 4951 (class 2606 OID 17409)
+-- Name: achievementshowcase achievementshowcase_achievementid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.achievementshowcase
+    ADD CONSTRAINT achievementshowcase_achievementid_fkey FOREIGN KEY (achievementid) REFERENCES public.achievements(achievementid);
+
+
+--
+-- TOC entry 4952 (class 2606 OID 17404)
+-- Name: achievementshowcase achievementshowcase_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.achievementshowcase
+    ADD CONSTRAINT achievementshowcase_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4944 (class 2606 OID 17261)
+-- Name: cart cart_gameid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cart
+    ADD CONSTRAINT cart_gameid_fkey FOREIGN KEY (gameid) REFERENCES public.games(gameid);
+
+
+--
+-- TOC entry 4945 (class 2606 OID 17256)
+-- Name: cart cart_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cart
+    ADD CONSTRAINT cart_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4933 (class 2606 OID 17123)
+-- Name: communityposts communityposts_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.communityposts
+    ADD CONSTRAINT communityposts_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4939 (class 2606 OID 17185)
+-- Name: dlcs dlcs_gameid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.dlcs
+    ADD CONSTRAINT dlcs_gameid_fkey FOREIGN KEY (gameid) REFERENCES public.games(gameid);
+
+
+--
+-- TOC entry 4937 (class 2606 OID 17171)
+-- Name: earnedachievements earnedachievements_achievementid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.earnedachievements
+    ADD CONSTRAINT earnedachievements_achievementid_fkey FOREIGN KEY (achievementid) REFERENCES public.achievements(achievementid);
+
+
+--
+-- TOC entry 4938 (class 2606 OID 17166)
+-- Name: earnedachievements earnedachievements_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.earnedachievements
+    ADD CONSTRAINT earnedachievements_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4953 (class 2606 OID 17475)
+-- Name: favoritegames favoritegames_gameid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.favoritegames
+    ADD CONSTRAINT favoritegames_gameid_fkey FOREIGN KEY (gameid) REFERENCES public.games(gameid);
+
+
+--
+-- TOC entry 4954 (class 2606 OID 17470)
+-- Name: favoritegames favoritegames_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.favoritegames
+    ADD CONSTRAINT favoritegames_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4949 (class 2606 OID 17392)
+-- Name: favoritegameshowcase favoritegameshowcase_gameid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.favoritegameshowcase
+    ADD CONSTRAINT favoritegameshowcase_gameid_fkey FOREIGN KEY (gameid) REFERENCES public.games(gameid);
+
+
+--
+-- TOC entry 4950 (class 2606 OID 17387)
+-- Name: favoritegameshowcase favoritegameshowcase_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.favoritegameshowcase
+    ADD CONSTRAINT favoritegameshowcase_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4940 (class 2606 OID 17499)
+-- Name: gamegenres fk_game; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.gamegenres
+    ADD CONSTRAINT fk_game FOREIGN KEY (gameid) REFERENCES public.games(gameid) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4941 (class 2606 OID 17504)
+-- Name: gamegenres fk_genre; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.gamegenres
+    ADD CONSTRAINT fk_genre FOREIGN KEY (genreid) REFERENCES public.genres(genreid) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4935 (class 2606 OID 17151)
+-- Name: friendships friendships_userid1_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.friendships
+    ADD CONSTRAINT friendships_userid1_fkey FOREIGN KEY (userid1) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4936 (class 2606 OID 17156)
+-- Name: friendships friendships_userid2_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.friendships
+    ADD CONSTRAINT friendships_userid2_fkey FOREIGN KEY (userid2) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4942 (class 2606 OID 17204)
+-- Name: gamegenres gamegenres_gameid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.gamegenres
+    ADD CONSTRAINT gamegenres_gameid_fkey FOREIGN KEY (gameid) REFERENCES public.games(gameid);
+
+
+--
+-- TOC entry 4943 (class 2606 OID 17209)
+-- Name: gamegenres gamegenres_genreid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.gamegenres
+    ADD CONSTRAINT gamegenres_genreid_fkey FOREIGN KEY (genreid) REFERENCES public.genres(genreid);
+
+
+--
+-- TOC entry 4948 (class 2606 OID 17324)
+-- Name: profiles profiles_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.profiles
+    ADD CONSTRAINT profiles_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4929 (class 2606 OID 17089)
+-- Name: purchases purchases_gameid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.purchases
+    ADD CONSTRAINT purchases_gameid_fkey FOREIGN KEY (gameid) REFERENCES public.games(gameid);
+
+
+--
+-- TOC entry 4930 (class 2606 OID 17084)
+-- Name: purchases purchases_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.purchases
+    ADD CONSTRAINT purchases_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4931 (class 2606 OID 17109)
+-- Name: reviews reviews_gameid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_gameid_fkey FOREIGN KEY (gameid) REFERENCES public.games(gameid);
+
+
+--
+-- TOC entry 4932 (class 2606 OID 17104)
+-- Name: reviews reviews_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+--
+-- TOC entry 4946 (class 2606 OID 17291)
+-- Name: wishlist wishlist_gameid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.wishlist
+    ADD CONSTRAINT wishlist_gameid_fkey FOREIGN KEY (gameid) REFERENCES public.games(gameid);
+
+
+--
+-- TOC entry 4947 (class 2606 OID 17286)
+-- Name: wishlist wishlist_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.wishlist
+    ADD CONSTRAINT wishlist_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+
+
+-- Completed on 2024-07-26 11:17:12
+
+--
+-- PostgreSQL database dump complete
+--
+
