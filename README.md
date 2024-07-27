@@ -20,7 +20,7 @@ I have included the PostgreSQL Dump file for the database
 Java JDK 17, I created the project in Eclipse. 
 
 ## Dependencies
-This project uses JavaFX 22 ad PostgreSQL JDBC 42.7.3 Drivers which can be found at: 
+This project uses JavaFX 22 and PostgreSQL JDBC 42.7.3 Drivers which can be found at: 
 https://gluonhq.com/products/javafx/,
 https://jdbc.postgresql.org/download/
 
@@ -28,11 +28,12 @@ https://jdbc.postgresql.org/download/
 1. Clone the repository
 2. Import the src folder into a new project
 3. download the required libraries and add them to the project buildpath
-4. Navigate to the common package
+4. Navigate to the application package
 5. add these vm arguments to the runtime config for the main SteamyApp.java, replacing the file path with your own
---module-path "path/to/your/javafx" --add-modules javafx.controls,javafx.graphics,javafx.fxml
+--module-path "path/to/your/javafx/lib" --add-modules javafx.controls,javafx.graphics,javafx.fxml
 
 ## Running the Project
-Run SteamyApp.java 
-The test user that I have been user is Username: alicewonder password: wonderland123
-if you want to search for games most of the test games start with the word 'game' so that will give the best results
+Run SteamyApp.java
+
+The test user that I have been using is Username: alicewonder   password: wonderland123
+if you want to search for games most of the test games start with the word 'game' so that will give the best results. You could also create your own account but it is best to use the test user to see the test data that is in the database
